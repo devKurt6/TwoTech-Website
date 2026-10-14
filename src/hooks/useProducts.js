@@ -1,1 +1,2 @@
-import {PRODUCTS} from '../data/products';export function useProducts(){return {data:PRODUCTS,loading:false,error:null,reload:()=>{}}}
+import {useCallback,useEffect} from 'react';import {api} from '../lib/api';import {supabase} from '../lib/supabase';import {useResource} from './useResource';
+export function useProducts(all=false){const loader=useCallback(()=>api.products(all),[all]);const resource=useResource(loader);useEffect(()=>{if(!supabase)return;const channel=supabase.channel('products-'+String(all)).on('postgres_changes',{event:'*',schema:'public',table:'products'},resource.reload).subscribe();return()=>{supabase.removeChannel(channel)}},[all,resource.reload]);return resource;}

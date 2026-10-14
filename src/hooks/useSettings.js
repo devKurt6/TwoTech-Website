@@ -1,1 +1,1 @@
-import {defaults} from '../data/settings';export function useSettings(){return {data:defaults,loading:false,error:null,reload:()=>{}}}
+import {api} from '../lib/api';import {defaults} from '../data/settings';import {useResource} from './useResource';export function useSettings(){return useResource(api.settings,defaults);}

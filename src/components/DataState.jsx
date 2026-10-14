@@ -1,0 +1,2 @@
+import Spinner from './Spinner';import EmptyState from './EmptyState';
+export default function DataState({resource,children}){if(resource.loading)return <Spinner/>;if(resource.error)return <div className="max-w-3xl mx-auto p-4"><EmptyState title="Couldn't load this information"><p role="alert" className="mt-2">{resource.error}</p><button className="btn bp mt-4" onClick={resource.reload}>Retry</button></EmptyState></div>;return children;}

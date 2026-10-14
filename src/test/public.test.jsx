@@ -1,0 +1,3 @@
+import {it,expect,vi} from 'vitest';import {render,screen} from '@testing-library/react';import ImageWithFallback from '../components/ImageWithFallback';import DataState from '../components/DataState';
+it('renders safe fallback when photo is missing',()=>{const {container}=render(<ImageWithFallback p={{name:'Sample RAM'}}/>);expect(container.querySelector('svg')).toBeTruthy()});
+it('offers retry after a data load failure',()=>{const reload=vi.fn();render(<DataState resource={{error:'Network unavailable',reload}}><p>Products</p></DataState>);screen.getByRole('button',{name:'Retry'}).click();expect(reload).toHaveBeenCalledOnce()});

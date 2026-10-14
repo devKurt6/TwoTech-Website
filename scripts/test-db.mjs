@@ -14,4 +14,36 @@ await db.exec("reset role;insert into auth.users values('22222222-2222-4222-8222
 assert.equal((await db.query('select * from public.messages')).rows.length,1);
 await db.exec("update public.products set visible=true where id='00000000-0000-4000-8000-000000000001';reset role;");
 console.log('PASS: migrations, 16 seeds, product visibility, anonymous permissions, forced defaults, non-admin isolation and admin access');
+if(fs.existsSync('supabase/migrations/202610140002_orders_requests.sql')){
+ const pid='00000000-0000-4000-8000-000000000001';
+ const base={name:'Test Customer',email:'customer@example.ph',phone:'09171234567',delivery_method:'delivery',address:'123 Santo Tomas Batangas',payment_method:'manual_transfer',request_id:'33333333-3333-4333-8333-333333333333',subtotal:1,total:1,delivery_fee:0};
+ const order=async(customer,items)=> (await db.query('select public.place_order($1::jsonb,$2::jsonb) result',[JSON.stringify(customer),JSON.stringify(items)])).rows[0].result;
+ await db.exec('set role anon');
+ const placed=await order(base,[{productId:pid,qty:2,price:1,stock:999}]);
+ assert.equal(Number(placed.total),15130);assert.match(placed.ref,/^ORD-/);
+ const repeated=await order(base,[{productId:pid,qty:2}]);assert.equal(repeated.ref,placed.ref);
+ await db.exec('reset role');
+ assert.equal((await db.query('select stock from public.products where id=$1',[pid])).rows[0].stock,10);
+ assert.equal((await db.query('select status from public.orders where ref=$1',[placed.ref])).rows[0].status,'awaiting_payment');
+ const count=(await db.query('select count(*)::int n from public.orders')).rows[0].n;
+ await db.exec('set role anon');
+ await assert.rejects(()=>order({...base,request_id:'44444444-4444-4444-8444-444444444444'},[{productId:pid,qty:11}]),/Insufficient stock/);
+ await assert.rejects(()=>order({...base,request_id:'44444444-4444-4444-8444-444444444444'},[{productId:pid,qty:1},{productId:'00000000-0000-4000-8000-000000000004',qty:1}]),/Insufficient stock/);
+ await assert.rejects(()=>order({...base,request_id:'44444444-4444-4444-8444-444444444444'},[{productId:pid,qty:-1}]),/Invalid product or quantity/);
+ await db.exec('reset role');
+ assert.equal((await db.query('select stock from public.products where id=$1',[pid])).rows[0].stock,10);
+ assert.equal((await db.query('select count(*)::int n from public.orders')).rows[0].n,count);
+ await db.exec("update public.products set visible=false where id='00000000-0000-4000-8000-000000000001';set role anon;");
+ await assert.rejects(()=>order({...base,request_id:'44444444-4444-4444-8444-444444444444'},[{productId:pid,qty:1}]),/no longer available/);
+ const send=async(kind,payload)=>(await db.query('select public.submit_request($1,$2::jsonb) result',[kind,JSON.stringify(payload)])).rows[0].result;
+ const message=await send('messages',{name:'Test',email:'test@example.ph',body:'A valid contact message',handled:true,admin_notes:'injected'});assert.match(message.ref,/^MSG-/);
+ const booking=await send('bookings',{name:'Test',email:'test@example.ph',phone:'09171234567',service:'Custom PC assembly',device:'Desktop PC',problem:'Cannot start the desktop',preferred_date:'2099-01-01',preferred_time:'9:00 AM',mode:'Drop-off',status:'done'});assert.match(booking.ref,/^BK-/);
+ await assert.rejects(()=>send('bookings',{name:'Test',email:'test@example.ph',phone:'09171234567',service:'Custom PC assembly',device:'Desktop PC',problem:'Cannot start the desktop',preferred_date:'2099-01-01',preferred_time:'9:00 AM',mode:'Remote'}),/supported mode/);
+ const quote=await send('quotes',{name:'Test',email:'test@example.ph',phone:'09171234567',category:'Website',title:'Shop website',requirements:'Build a catalog and booking website',budget:'Not sure yet',status:'closed'});assert.match(quote.ref,/^QR-/);
+ await db.exec('reset role');
+ assert.equal((await db.query('select handled,admin_notes from public.messages where ref=$1',[message.ref])).rows[0].handled,false);
+ assert.equal((await db.query('select status from public.bookings where ref=$1',[booking.ref])).rows[0].status,'pending');
+ assert.equal((await db.query('select status from public.quotes where ref=$1',[quote.ref])).rows[0].status,'pending');
+ console.log('PASS: server pricing/fee, stock decrement, idempotent retry, overselling rejection, rollback, hidden products, request refs/defaults and service modes');
+}
 await db.close();

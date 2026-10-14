@@ -1,0 +1,1 @@
+export default function Honeypot({value,onChange}){return <div className="hidden" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" value={value} onChange={e=>onChange(e.target.value)}/></label></div>}

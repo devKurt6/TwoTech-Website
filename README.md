@@ -4,6 +4,8 @@ A React 18/Vite/Tailwind customer website and admin panel for Two Tech in Santo 
 
 **Start with [the complete GitHub → Netlify + Neon setup tutorial](docs/SETUP_TUTORIAL.md).** It includes Windows commands, dev/production branches, Cloudinary keys, creating your admin, environment scopes, GitHub push, deployment and troubleshooting.
 
+No Node.js available? For a fresh Neon database, copy all of [`db/setup-neon.sql`](db/setup-neon.sql) into Neon SQL Editor and run it on the branch/database used by Netlify. It creates the tables/functions and sample data; it does not create an admin account. A `SELECT` that checks table existence does not create the tables.
+
 ## Quick start
 
 Install Node 22+ with npm and Git. In the project folder:

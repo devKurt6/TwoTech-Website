@@ -68,6 +68,10 @@ Cloudinary's current documentation states that upload presets do **not** support
 
 ## 4. Create the database tables, sample catalog, and admin
 
+**Without Node.js (fresh database):** open [`db/setup-neon.sql`](../db/setup-neon.sql), copy the entire file into Neon → SQL Editor, select the branch/database used by Netlify's `DATABASE_URL`, and click Run. It creates all tables/functions, records migration checksums, and adds the sample catalog/settings in one transaction. The final result should show `sample_products = 16` and `settings_rows = 1`. It refuses to overwrite existing application tables. This replaces the migrate/seed commands for a fresh database; it does not create an admin account. Admin creation remains a separate step below. After setup, reload `/api/settings` and `/api/products` on your deployed domain.
+
+With Node.js available, use the following setup commands instead:
+
 Run these commands from the project folder, with `.env` pointing to your **development** branch:
 
 ```powershell

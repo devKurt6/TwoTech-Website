@@ -1,0 +1,191 @@
+-- TWO TECH: fresh Neon database setup, including SAMPLE products and settings.
+
+-- Copy ALL of this file into Neon SQL Editor, select the intended branch/database, and Run.
+
+-- No passwords or admin accounts are included. Existing application tables cause an abort; nothing is dropped.
+
+begin;
+
+select pg_advisory_xact_lock(74018202);
+
+do $$ begin
+    if exists(select 1 from unnest(array['admin_users','products','orders','order_items','bookings','quotes','messages','settings','login_attempts','rate_limits']) as t(name) where to_regclass('public.' || t.name) is not null) then
+      raise exception 'Setup stopped: application tables already exist. No existing tables were changed. Use the migration runner for an existing database.';
+    end if;
+  end $$;
+
+create table if not exists public.schema_migrations(name text primary key,checksum text not null,applied_at timestamptz not null default now());
+
+-- 001_schema.sql
+
+create table public.admin_users(id uuid primary key default gen_random_uuid(),email text unique not null check(email=lower(email)),password_hash text not null,created_at timestamptz not null default now());
+create table public.login_attempts(id bigint generated always as identity primary key,email text not null,ip text not null,created_at timestamptz not null default now());
+create index login_attempts_window on public.login_attempts(created_at,email,ip);
+create table public.rate_limits(bucket text primary key,hits int not null,window_start timestamptz not null);
+create function public.make_ref(prefix text) returns text language sql volatile set search_path = '' as $$ select prefix || '-' || upper(replace(gen_random_uuid()::text,'-','')) $$;
+create table public.products (
+ id uuid primary key default gen_random_uuid(), name text not null check(char_length(name) between 2 and 150),
+ category text not null check(category in ('Processors','Motherboards','RAM','SSD & HDD','Graphics Cards','Power Supplies','PC Cases','Cooling','Peripherals')),
+ price numeric(10,2) not null check(price>0), stock integer not null default 0 check(stock>=0),
+ description text not null default '' check(char_length(description)<=5000), specs text not null default '' check(char_length(specs)<=5000), image_url text, image_public_id text,
+ visible boolean not null default true, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table public.orders (
+ id uuid primary key default gen_random_uuid(), ref text unique not null default public.make_ref('ORD'),
+ customer_name text not null check(char_length(trim(customer_name)) between 1 and 150), email text not null check(char_length(email)<=254 and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
+ phone text not null check(phone ~ '^(\+63|0)9[0-9]{9}$'), delivery_method text not null check(delivery_method in ('pickup','delivery')), address text check(char_length(address)<=1000),
+ payment_method text not null check(payment_method in ('cash','manual_transfer')),
+ subtotal numeric(10,2) not null check(subtotal>0), delivery_fee numeric(10,2) not null default 0 check(delivery_fee>=0), total numeric(10,2) not null check(total=subtotal+delivery_fee),
+ status text not null default 'new' check(status in ('new','awaiting_payment','paid','processing','ready','completed','cancelled')),
+ notes text check(char_length(notes)<=5000), created_at timestamptz not null default now(),
+ check(delivery_method<>'delivery' or char_length(trim(address))>=8));
+create table public.order_items (
+ id uuid primary key default gen_random_uuid(),order_id uuid not null references public.orders on delete cascade,product_id uuid references public.products on delete set null,
+ name text not null,unit_price numeric(10,2) not null check(unit_price>0),qty integer not null check(qty>0));
+create table public.bookings (
+ id uuid primary key default gen_random_uuid(),ref text unique not null default public.make_ref('BK'),
+ name text not null check(char_length(trim(name)) between 1 and 150),email text not null check(char_length(email)<=254 and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),phone text not null check(phone ~ '^(\+63|0)9[0-9]{9}$'),
+ service text not null check(char_length(service) between 1 and 200),device text not null check(char_length(trim(device)) between 1 and 500),problem text not null check(char_length(trim(problem)) between 10 and 5000),
+ preferred_date date not null,preferred_time text not null check(preferred_time in ('9:00 AM','11:00 AM','1:00 PM','3:00 PM','5:00 PM')),
+ mode text not null check(mode in ('Drop-off','Onsite','Remote')),address text check(char_length(address)<=1000),
+ status text not null default 'pending' check(status in ('pending','confirmed','done','cancelled')),admin_notes text check(char_length(admin_notes)<=5000),created_at timestamptz not null default now(),
+ check(mode<>'Onsite' or char_length(trim(address))>=8));
+create table public.quotes (
+ id uuid primary key default gen_random_uuid(),ref text unique not null default public.make_ref('QR'),
+ name text not null check(char_length(trim(name)) between 1 and 150),email text not null check(char_length(email)<=254 and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),phone text not null check(phone ~ '^(\+63|0)9[0-9]{9}$'),
+ category text not null check(category in ('Website','Desktop Application','Automation','AI/Image Processing','Embedded Systems/IoT','Other')),
+ title text not null check(char_length(trim(title)) between 1 and 200),requirements text not null check(char_length(trim(requirements)) between 20 and 10000),hardware text check(char_length(hardware)<=5000),
+ budget text not null check(char_length(budget) between 1 and 150),target_date date,reference_link text check(char_length(reference_link)<=2000 and (reference_link='' or reference_link ~ '^https?://[^[:space:]]+\.[^[:space:]]+')),
+ status text not null default 'pending' check(status in ('pending','reviewing','quoted','closed')),admin_notes text check(char_length(admin_notes)<=5000),created_at timestamptz not null default now());
+create table public.messages (
+ id uuid primary key default gen_random_uuid(),ref text unique not null default public.make_ref('MSG'),name text not null check(char_length(trim(name)) between 1 and 150),
+ email text not null check(char_length(email)<=254 and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),body text not null check(char_length(trim(body)) between 10 and 5000),
+ handled boolean not null default false,admin_notes text check(char_length(admin_notes)<=5000),created_at timestamptz not null default now());
+create table public.settings (id int primary key default 1 check(id=1),data jsonb not null default '{}' check(jsonb_typeof(data)='object'));
+create function public.touch_updated_at() returns trigger language plpgsql set search_path='' as $$ begin new.updated_at=now();return new;end $$;
+create trigger products_updated before update on public.products for each row execute function public.touch_updated_at();
+create index products_visible_category on public.products(visible,category);
+create index orders_status_date on public.orders(status,created_at desc);
+create index bookings_status_date on public.bookings(status,created_at desc);
+create index quotes_status_date on public.quotes(status,created_at desc);
+create index order_items_order on public.order_items(order_id);
+
+
+insert into public.schema_migrations(name,checksum) values('001_schema.sql','520eebe9b5dc6171ce1456f0e55277f55f8b493d7944eaf99a3f33cfbd96671d');
+
+-- 002_orders.sql
+
+alter table public.orders add column request_id uuid unique;
+create function public.place_order(customer jsonb,items jsonb) returns jsonb language plpgsql security invoker set search_path='' as $$
+declare
+ line record; product public.products%rowtype; existing public.orders%rowtype;
+ order_id uuid; checkout_id uuid; subtotal numeric(10,2):=0; fee numeric(10,2):=0; total numeric(10,2); reference text;
+ normalized_phone text; shipping text; payment text;
+begin
+ if jsonb_typeof(customer) is distinct from 'object' or jsonb_typeof(items) is distinct from 'array' then raise exception 'Invalid checkout payload';end if;
+ if jsonb_array_length(items) not between 1 and 100 then raise exception 'Your cart must contain 1–100 items';end if;
+ if coalesce(char_length(trim(customer->>'name')),0) not between 1 and 150 or coalesce(char_length(customer->>'email'),0) not between 3 and 254 or (customer->>'email') !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' then raise exception 'Enter a valid name and email';end if;
+ normalized_phone:=regexp_replace(coalesce(customer->>'phone',''),'[[:space:]-]','','g');
+ if normalized_phone !~ '^(\+63|0)9[0-9]{9}$' then raise exception 'Enter a valid PH mobile number';end if;
+ shipping:=customer->>'delivery_method';payment:=customer->>'payment_method';
+ if shipping is null or shipping not in ('pickup','delivery') or payment is null or payment not in ('cash','manual_transfer') then raise exception 'Choose a valid delivery and payment method';end if;
+ if coalesce(char_length(customer->>'address'),0)>1000 or (shipping='delivery' and coalesce(char_length(trim(customer->>'address')),0)<8) then raise exception 'Enter a full delivery address';end if;
+ if coalesce(customer->>'request_id','') !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' then raise exception 'Missing checkout request ID';end if;
+ checkout_id:=(customer->>'request_id')::uuid;
+ perform pg_advisory_xact_lock(hashtextextended(checkout_id::text,0));
+ select * into existing from public.orders o where o.request_id=checkout_id;
+ if found then
+   if existing.email<>trim(customer->>'email') or existing.phone<>normalized_phone then raise exception 'Checkout request ID already used';end if;
+   return jsonb_build_object('ref',existing.ref,'total',existing.total);
+ end if;
+ for line in select value from jsonb_array_elements(items) loop
+   if jsonb_typeof(line.value) is distinct from 'object' or coalesce(line.value->>'productId','') !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' or coalesce(line.value->>'qty','') !~ '^[1-9][0-9]{0,2}$' then raise exception 'Invalid product or quantity';end if;
+ end loop;
+ -- Lock in UUID order to avoid deadlocks between differently ordered carts.
+ for line in select (value->>'productId')::uuid id,sum((value->>'qty')::int)::int qty from jsonb_array_elements(items) group by 1 order by 1 loop
+   if line.qty>999 then raise exception 'Quantity is too large';end if;
+   select * into product from public.products p where p.id=line.id for update;
+   if not found or not product.visible then raise exception 'A product is no longer available. Refresh your cart';end if;
+   if product.stock<line.qty then raise exception 'Insufficient stock for %. Refresh your cart',product.name;end if;
+   subtotal:=subtotal+product.price*line.qty;
+ end loop;
+ if shipping='delivery' then select coalesce((s.data->>'delivery_fee')::numeric,150) into fee from public.settings s where s.id=1;fee:=coalesce(fee,150);end if;
+ if fee<0 then raise exception 'Delivery fee is not configured correctly';end if;
+ total:=subtotal+fee;
+ insert into public.orders(customer_name,email,phone,delivery_method,address,payment_method,subtotal,delivery_fee,total,status,request_id)
+ values(trim(customer->>'name'),trim(customer->>'email'),normalized_phone,shipping,case when shipping='delivery' then trim(customer->>'address') else null end,payment,subtotal,fee,total,case when payment='manual_transfer' then 'awaiting_payment' else 'new' end,checkout_id)
+ returning id,ref into order_id,reference;
+ for line in select (value->>'productId')::uuid id,sum((value->>'qty')::int)::int qty from jsonb_array_elements(items) group by 1 order by 1 loop
+   select * into product from public.products p where p.id=line.id;
+   insert into public.order_items(order_id,product_id,name,unit_price,qty) values(order_id,product.id,product.name,product.price,line.qty);
+   update public.products set stock=stock-line.qty where id=product.id;
+ end loop;
+ return jsonb_build_object('ref',reference,'total',total);
+end $$;
+revoke all on function public.place_order(jsonb,jsonb) from public;
+
+create function public.validate_booking_service() returns trigger language plpgsql set search_path='' as $$
+declare valid_mode boolean;
+begin
+ valid_mode := case
+ when new.service in ('Custom PC assembly','Parts compatibility assessment','RAM & SSD upgrades','GPU installation','Operating system & driver setup','No-display & boot issue diagnosis','Overheating & sudden shutdown','Slow computer troubleshooting','Hardware & software diagnosis','System unit deep cleaning','CPU thermal paste replacement','GPU cleaning & thermal paste','Thermal pad inspection/replacement where appropriate') then new.mode in ('Drop-off','Onsite')
+ when new.service in ('Windows installation/reinstallation','Computer formatting','Driver installation','Licensed software setup','Malware removal','Data backup before formatting') then new.mode in ('Drop-off','Onsite','Remote')
+ when new.service in ('Router & Wi-Fi setup','LAN troubleshooting','Printer setup','File sharing setup','Remote & onsite technical support') then new.mode in ('Onsite','Remote')
+ else false end;
+ if not valid_mode then raise exception 'Choose a valid service and supported mode';end if;return new;
+end $$;
+create trigger booking_service before insert or update on public.bookings for each row execute function public.validate_booking_service();
+
+
+insert into public.schema_migrations(name,checksum) values('002_orders.sql','d97996e306289b872c7cf626cbdd2a569601b19d721ddb69dcdc2b7adb11a353');
+
+-- 003_limits.sql
+
+create function public.reserve_login(login_email text,client_ip text) returns boolean language plpgsql security invoker set search_path='' as $$
+declare attempts int;
+begin
+ perform pg_advisory_xact_lock(74018201);
+ delete from public.login_attempts where created_at < now()-interval '1 day';
+ select count(*) into attempts from public.login_attempts where created_at>now()-interval '15 minutes' and (email=login_email or ip=client_ip);
+ if attempts>=5 then return false;end if;
+ insert into public.login_attempts(email,ip) values(login_email,client_ip);
+ return true;
+end $$;
+create function public.consume_limit(key text,max_hits int) returns boolean language plpgsql security invoker set search_path='' as $$
+declare count_hits int;
+begin
+ delete from public.rate_limits where window_start < now()-interval '1 day';
+ insert into public.rate_limits(bucket,hits,window_start) values(key,1,now())
+ on conflict(bucket) do update set hits=case when rate_limits.window_start<now()-interval '1 minute' then 1 else rate_limits.hits+1 end,window_start=case when rate_limits.window_start<now()-interval '1 minute' then now() else rate_limits.window_start end returning hits into count_hits;
+ return count_hits<=max_hits;
+end $$;
+revoke all on all functions in schema public from public;
+revoke create on schema public from public;
+
+
+insert into public.schema_migrations(name,checksum) values('003_limits.sql','5591741a0497f0f2eec130e6e47413b5e669e98f74631a5e71e597c96fe00742');
+
+-- Sample catalog and default business settings
+
+-- SAMPLE products, prices, stock and descriptions. Business contact details are real.
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000001','Ryzen 5 5600 (6-core)','Processors',7490,12,'Ryzen 5 5600 (6-core) — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','AM4 · 6 cores / 12 threads · 3.5–4.4 GHz · 65W') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000002','Core i5-12400F','Processors',8250,5,'Core i5-12400F — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','LGA1700 · 6 cores / 12 threads · up to 4.4 GHz · No iGPU') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000003','B550M Micro-ATX Board','Motherboards',5890,8,'B550M Micro-ATX Board — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','AM4 · DDR4 · M.2 NVMe · Micro-ATX') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000004','B660M DDR4 Board','Motherboards',5650,0,'B660M DDR4 Board — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','LGA1700 · DDR4 · M.2 · Micro-ATX') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000005','16GB DDR4 3200 Kit (2×8GB)','RAM',2090,25,'16GB DDR4 3200 Kit (2×8GB) — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','DDR4 · 3200 MHz · CL16 · Desktop DIMM') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000006','32GB DDR5 5600 Kit (2×16GB)','RAM',5990,3,'32GB DDR5 5600 Kit (2×16GB) — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','DDR5 · 5600 MHz · CL36 · Desktop DIMM') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000007','500GB NVMe SSD','SSD & HDD',2190,30,'500GB NVMe SSD — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','M.2 2280 · PCIe 3.0 · up to 3,400 MB/s read') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000008','1TB 7200RPM HDD','SSD & HDD',2450,14,'1TB 7200RPM HDD — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','3.5" SATA · 7200 RPM · 64MB cache') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000009','RTX 4060 8GB','Graphics Cards',18900,4,'RTX 4060 8GB — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','8GB GDDR6 · 115W · 1× 8-pin power') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000010','RX 6600 8GB','Graphics Cards',12900,0,'RX 6600 8GB — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','8GB GDDR6 · 132W · 1× 8-pin power') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000011','650W 80+ Bronze PSU','Power Supplies',2890,10,'650W 80+ Bronze PSU — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','650W · 80+ Bronze · ATX · 120mm fan') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000012','Mid-Tower ATX Case','PC Cases',2490,9,'Mid-Tower ATX Case — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','ATX / mATX · 2 front fans · Tempered glass side') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000013','120mm ARGB Case Fan (3-pack)','Cooling',1190,40,'120mm ARGB Case Fan (3-pack) — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','120mm · ARGB · 1,500 RPM · 3-pin controller') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000014','Tower CPU Cooler','Cooling',1390,16,'Tower CPU Cooler — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','4 heat pipes · 120mm fan · Intel & AMD mounts') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000015','Mechanical Keyboard (TKL)','Peripherals',1990,11,'Mechanical Keyboard (TKL) — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','Tenkeyless · Red switches · USB-C') on conflict(id) do nothing;
+insert into public.products(id,name,category,price,stock,description,specs) values ('00000000-0000-4000-8000-000000000016','Wireless Mouse','Peripherals',690,22,'Wireless Mouse — a dependable pick for builds and upgrades. Ask us to check compatibility with your existing parts before you buy.','2.4 GHz · 1600 DPI · AA battery') on conflict(id) do nothing;
+insert into public.settings(id,data) values(1,'{"headline":"Your Partner in IT Solutions, Repairs & Custom Development.","banner":"","phone":"+63 963 310 2486","email":"twotech0128@gmail.com","address":"Purok 4, Brgy. Sta. Maria, Filinvest Rd, Santo Tomas, Batangas, Philippines","hours":"9:00 AM–8:00 PM (days to be confirmed)","facebook":"https://www.facebook.com/Engr.TwoTECH","delivery_fee":150,"payment_instructions":"DEMO — Contact Two Tech for verified bank or GCash transfer instructions before sending payment.","founder_bio":"Kurt Decena is a Computer Engineering graduate with IT support and software development experience.","low_stock_threshold":5}'::jsonb) on conflict(id) do nothing;
+
+
+commit;
+
+select (select count(*) from public.products) as sample_products, (select count(*) from public.settings) as settings_rows;

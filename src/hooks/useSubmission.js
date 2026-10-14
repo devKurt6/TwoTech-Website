@@ -40,7 +40,14 @@ export function useSubmission(kind, send) {
       setDone(result);
       scrollTo(0, 0);
     } catch (err) {
+      const fields = Object.fromEntries(
+        Object.entries(err.fields || {}).map(([key, value]) => [
+          key.replace(/^customer\./, ""),
+          value,
+        ]),
+      );
       setErrors({
+        ...fields,
         form: err.message + " Please check your connection and retry.",
       });
     } finally {
@@ -50,4 +57,3 @@ export function useSubmission(kind, send) {
   }
   return { errors, busy, done, setDone, submit, honeypot, setHoneypot };
 }
-

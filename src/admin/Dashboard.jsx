@@ -1,2 +1,52 @@
-import {Link} from 'react-router-dom';import {api} from '../lib/api';import {useResource} from '../hooks/useResource';import DataState from '../components/DataState';
-export default function Dashboard(){const resource=useResource(api.dashboard,{listed:0,low_stock:0,orders:0,pending:0,restock:[]});const d=resource.data,stats=[['Products listed',d.listed,'products'],['Low or out of stock',d.low_stock,'products'],['Orders to handle',d.orders,'inbox'],['Bookings & quotes pending',d.pending,'inbox']];return <><h1 className="text-2xl font-extrabold">Dashboard</h1><DataState resource={resource}><div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">{stats.map(([label,value,route])=><Link className="card p-4" to={'/admin/'+route} key={label}><span className="text-sm text-stone-600">{label}</span><b className="block text-3xl mt-1">{value}</b></Link>)}</div><section className="card p-4 mt-5"><h2 className="font-extrabold">Needs restocking</h2>{d.restock.length?<ul className="divide-y mt-2">{d.restock.map(p=><li key={p.id} className="py-2 flex justify-between gap-3"><span>{p.name}</span><b className={p.stock?'text-goldText':'text-red-700'}>{p.stock?p.stock+' left':'Out of stock'}</b></li>)}</ul>:<p className="mt-2">Everything is well stocked.</p>}</section></DataState></>}
+import { Link } from "react-router-dom";
+import { api } from "../lib/api";
+import { useResource } from "../hooks/useResource";
+import DataState from "../components/DataState";
+export default function Dashboard() {
+  const resource = useResource(api.dashboard, {
+    listed: 0,
+    low_stock: 0,
+    orders: 0,
+    pending: 0,
+    restock: [],
+  });
+  const d = resource.data,
+    stats = [
+      ["Products listed", d.listed, "products"],
+      ["Low or out of stock", d.low_stock, "products"],
+      ["Orders to handle", d.orders, "inbox"],
+      ["Bookings & quotes pending", d.pending, "inbox"],
+    ];
+  return (
+    <>
+      <h1 className="text-2xl font-extrabold">Dashboard</h1>
+      <DataState resource={resource}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+          {stats.map(([label, value, route]) => (
+            <Link className="card p-4" to={"/admin/" + route} key={label}>
+              <span className="text-sm text-stone-600">{label}</span>
+              <b className="block text-3xl mt-1">{value}</b>
+            </Link>
+          ))}
+        </div>
+        <section className="card p-4 mt-5">
+          <h2 className="font-extrabold">Needs restocking</h2>
+          {d.restock.length ? (
+            <ul className="divide-y mt-2">
+              {d.restock.map((p) => (
+                <li key={p.id} className="py-2 flex justify-between gap-3">
+                  <span>{p.name}</span>
+                  <b className={p.stock ? "text-goldText" : "text-red-700"}>
+                    {p.stock ? p.stock + " left" : "Out of stock"}
+                  </b>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2">Everything is well stocked.</p>
+          )}
+        </section>
+      </DataState>
+    </>
+  );
+}

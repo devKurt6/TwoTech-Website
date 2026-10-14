@@ -11,7 +11,8 @@ export default function ProductForm({ product, onSaved, onClose }) {
         stock: "",
         desc: "",
         specs: "",
-        image_url: null, image_public_id: null,
+        image_url: null,
+        image_public_id: null,
         visible: true,
       },
     ),
@@ -205,4 +206,3 @@ export default function ProductForm({ product, onSaved, onClose }) {
     </form>
   );
 }
-

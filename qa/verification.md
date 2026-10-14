@@ -1,12 +1,9 @@
-# Local verification — 14 October 2026
+# Verification after the Neon migration
 
-- Production Vite build: passed. Admin is emitted as a separate lazy chunk.
-- ESLint: passed; no warnings after fixes.
-- Vitest: 10 passing unit/component tests (validators, peso formatting, cart sanitization/reconciliation, image fallback, data retry, booking preselection, checkout retry/idempotency and dialog Escape).
-- PostgreSQL/PGlite: migrations and 16 seeds execute; RLS/grants isolate anonymous and non-admin clients; public status injection rejected or ignored; hidden products excluded; admin access works. Order tampering cannot set price, stock or delivery fee. Stock decrement, repeat checkout, overselling rejection, rollback and service/mode validation pass.
-- Browser: home, shop, direct product dialog, services, booking, quote, about/contact, empty cart, admin login and 404 render at 320, 768 and 1280 pixels. Document scroll widths do not exceed viewports.
-- Browser: isolated admin Dashboard, Products, Inbox and Settings fixtures render at all three widths with no horizontal overflow. At 320 pixels the product editor fits and scrolls; Shift+Tab wraps to Save, Tab wraps to Close, saving returns focus to Edit and updates fixture price.
-- Browser: demo cash/manual-transfer checkout offers no card fields, produces an explicit demo reference and clears cart; an RPC network failure is separately covered by the component test without clearing cart.
-- User-supplied logo converted to PNG; missing-image fallback checked.
-
-Remaining external verification: hosted Supabase Auth membership/login, hosted Storage upload and MIME/size enforcement, multi-session concurrency load test, real payment instructions, actual inventory, confirmed operating days, and Netlify publication/deep-link/header checks. These require the owner's configured projects. No live deployment or payments were performed.
+- The frontend production build, local PostgreSQL schema/seed, least-privilege role checks and function-handler security tests pass without hosted credentials. The Netlify production Functions archive builds successfully.
+- 32 automated tests cover frontend behavior, server pricing, stock, hidden products, simultaneous last-unit requests through the local adapter, malformed/oversized/honeypot input, public setting allowlists, all admin auth gates, CSRF, generic login throttling, token tampering and image signing/metadata checks.
+- Function database tests use PGlite (one serialized local PostgreSQL connection) and provider mocks. They do not replace a multi-session test on a configured Neon development branch.
+- The original component layouts and routes are preserved. Previous public/admin responsive checks covered 320/768/1280 pixels. The isolated admin layout fixture does not ship to production.
+- Netlify Dev started Vite locally, but this Windows environment rejected the CLI's dependency symlinks with EPERM. This is an operating-system development-tool limitation; it is documented in the setup tutorial. No system settings were changed.
+- Hosted Neon connection/migration, real production login, Cloudinary upload/cleanup, GitHub push and Netlify deployment remain account setup steps because credentials were not supplied.
+- No payment gateway was added. No card data is collected. Products, prices and stock remain sample data; operating days remain unconfirmed.

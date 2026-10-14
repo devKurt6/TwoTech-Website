@@ -1,6 +1,7 @@
 import fs from "node:fs";
+import "dotenv/config";
 const origin = new URL(
-  process.env.SITE_URL || process.env.URL || "http://localhost:5173",
+  process.env.SITE_URL || process.env.URL || "http://localhost:8888",
 ).origin;
 const paths = ["/", "/shop", "/services", "/book", "/quote", "/about", "/cart"];
 fs.mkdirSync("public", { recursive: true });

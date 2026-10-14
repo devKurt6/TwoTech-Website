@@ -1,85 +1,94 @@
 # Two Tech
 
-React 18 + Vite + Tailwind + React Router customer site and lazy-loaded Supabase admin panel. The layouts and copy were ported from the two original HTML prototypes in `reference/`. The existing `Two Tech.jpg` artwork is also provided as `public/logo.png`; if that image fails, the header falls back to the TwoTech wordmark.
+A React 18/Vite/Tailwind customer website and admin panel for Two Tech in Santo Tomas, Batangas. React calls same-origin Netlify Functions; only those functions connect to Neon Postgres. Product images use signed Cloudinary uploads. The original layouts, business details and customer journeys remain.
 
-## Local setup
+**Start with [the complete GitHub → Netlify + Neon setup tutorial](docs/SETUP_TUTORIAL.md).** It includes Windows commands, dev/production branches, Cloudinary keys, creating your admin, environment scopes, GitHub push, deployment and troubleshooting.
 
-Use Node 22+ and npm, or pnpm. This repo includes a pnpm lockfile.
+## Quick start
 
-```sh
-pnpm install --frozen-lockfile
-cp .env.example .env
-pnpm dev
-```
-
-For npm: `npm install`, then `npm run dev`. Open the URL printed by Vite. Without Supabase variables the public site uses the 16 sample products; form and order confirmations are explicitly demo-only and nothing is transmitted. Admin login is disabled until Supabase is configured. With both variables present, database/network errors show a retry state; the app never silently replaces a failed live database with sample data.
-
-## Supabase
-
-1. Create a Supabase project. Copy its project URL and browser anon key into `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Restart Vite after changes. Never use a service-role key in the browser, `.env.example`, Git, settings, or Netlify frontend variables.
-2. Apply all files in `supabase/migrations/` in filename order in the project's SQL editor. Alternatively install the Supabase CLI, run `supabase link --project-ref YOUR_PROJECT_REF`, then `supabase db push`. CLI project credentials stay outside this repository.
-3. Run `supabase/seed.sql` once in the SQL editor for a test/empty catalog. It uses stable UUIDs and avoids overwriting existing rows. Sample stock and prices must be replaced or hidden before selling.
-4. In Authentication → Users, create the owner with email/password. Copy that user's UUID and run the following in the SQL editor:
-
-```sql
-insert into public.admins(user_id) values ('YOUR_AUTH_USER_UUID');
-```
-
-5. Open `/admin/login`. A signed-in account without an `admins` row sees “You're not authorized.” Browser clients cannot add administrators. Configure Supabase's Auth Site URL and redirect URLs for the final domain, disable unnecessary public signups, and set suitable Auth rate limits.
-6. Optionally enable the `products` table in the `supabase_realtime` publication for cross-tab product updates. Reads refresh on route navigation and window focus even without Realtime.
-
-RLS is enabled on all application tables. Only visible products and public settings can be read publicly. Orders and order items have no public insert or select permission. `place_order(customer, items)` validates customer data, aggregates duplicate quantities, locks products in UUID order, uses database prices and delivery fees, and decrements stock in a single transaction. A random `request_id` prevents a network retry from placing the same order twice. The cart stores only `{productId, qty}` in localStorage and revalidates against visible products and stock.
-
-Public booking, quote and message inserts can only set customer columns. `submit_request(kind, payload)` is a restricted insert wrapper returning the generated reference without exposing any records. It ignores client status, admin notes, IDs and timestamps. This resolves the need for a reference while preserving the public SELECT prohibition. Booking service/mode combinations and dates are validated in PostgreSQL as well as the browser. References use the full random UUID to avoid short-code collisions.
-
-`product-images` allows public reads, admin-only writes/deletes, supported image MIME types, and a 2 MB limit. Client uploads also validate type/size, show a preview, and remove replaced/unused images after the database save. A failed cleanup can be handled in the Supabase Storage dashboard. Settings are public: never store passwords, private account details or API keys there.
-
-## Payments and operations
-
-Only Cash on Pickup/Delivery and Bank/GCash manual transfer are offered. No card fields or payment gateway exists. A manual transfer creates an `awaiting_payment` order; an admin verifies the transfer and clicks “Mark paid.” Cash orders start as `new`. The “demo order/payment flow” labels intentionally remain even with a connected database until the owner confirms the real payment instructions and operating procedure. Connected forms really save requests; unconfigured forms do not.
-
-Orders reserve stock at creation. Cancelling an order does **not** automatically restock it; the owner inspects the reservation/fulfilment state and adjusts stock explicitly in Products. This avoids restocking an already delivered order. Email/SMS notifications, refunds, gateway payments, PayMongo/webhooks and customer accounts are not implemented or implied.
-
-## Netlify
-
-1. Push the repository to your Git provider and import it into Netlify, or deploy a local `dist/` build using your own Netlify account.
-2. Build command: `npm run build`. Publish directory: `dist`. `netlify.toml` includes SPA fallback, CSP, HTTPS/HSTS, framing protection, MIME-sniffing protection and other security headers. No custom backend or Netlify Function is needed for manual payments.
-3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Netlify's build environment. Add `SITE_URL=https://your-final-domain` for the canonical sitemap, especially with a custom domain. If omitted, the build uses Netlify's `URL`; local builds use `http://localhost:5173`. Rebuild whenever these values change.
-4. Deploy, then directly load `/shop`, `/book`, and `/admin/login` to confirm the SPA fallback. Check response security headers and perform the connected QA below on a test project before launch.
-5. If using a Supabase custom domain or self-hosted project, update the CSP `connect-src` and `img-src` allowlists in `netlify.toml` to match that host.
-
-This delivery includes deployment configuration and instructions; no hosted Supabase/Netlify project or credentials were provided, so no live migration, upload, Auth login or Netlify publication was performed. Local PostgreSQL tests verify the SQL; they do not certify a remote project's configuration. Per-page metadata and LocalBusiness JSON-LD update in the browser. Social crawlers that do not execute JavaScript may need a prerendering service for route-specific link previews.
-
-## Verification
+Install Node 22+ with npm and Git. In the project folder:
 
 ```sh
-pnpm lint
-pnpm test
-pnpm test:db
-pnpm build
-pnpm format:check
+npm install
+# Windows PowerShell: Copy-Item .env.example .env
+# macOS/Linux: cp .env.example .env
+# Fill the private .env using the tutorial, then:
+npm run db:migrate
+npm run db:seed
+npm run create-admin
+npm run dev
 ```
 
-`test:db` runs the actual migrations and seed in isolated PostgreSQL (PGlite), with Supabase-compatible test Auth and Storage schemas. It checks RLS and SQL grants for anonymous, authenticated non-admin and admin roles; visibility; immutable customer defaults; server price/fee integrity; stock decrement; duplicate retry; hidden products; overselling rejection; and transaction rollback. It does not test hosted Auth, Storage HTTP MIME/size enforcement or multi-connection concurrency under load. Row locks and deterministic lock ordering provide the transaction design for concurrent production requests.
+Open `http://localhost:8888`, including `/admin/login`. `npm run dev` runs Netlify Dev, which proxies Vite and Functions. Port 5173 by itself is UI-only. On Windows, Netlify CLI dependency symlinks may require a developer-enabled environment or WSL; this was an observed verification limit on the implementation machine. No OS security settings were changed.
 
-Unit/component tests cover validators, peso formatting, cart reconciliation, missing images, network retry, booking preselection/modes, checkout confirmation and dialog Escape handling. Browser QA covers all public routes, product details, 404, and admin login at 320/768/1280 pixels, with no horizontal overflow. Admin screens also have an isolated development-only layout fixture at `/qa/admin.html`, with in-memory test rows. This fixture is **not** a production route or Vite build input and never accesses live records; its HTML/module are absent from `dist`.
+No database credentials are bundled and the app never substitutes fake success for an API error. It shows loading, waking-server, retry and empty states. Development and production should use separate Neon branches. Migrations/seed are in `db/`; schema changes are tracked with checksums and transaction locks. Scripts use the optional owner-only `MIGRATION_DATABASE_URL` when set, otherwise `DATABASE_URL`. Runtime can use the restricted role in `db/app-role.sql`. Do not deploy the owner migration URL to Netlify.
 
-Manual connected QA checklist:
+## Environment variables
 
-- Set actual prices, stock, photos, payment instructions, delivery fee and operating days; review founder bio.
-- Hide a product and confirm it vanishes after route refresh; verify an existing cart removes it and caps changed stock.
-- Tab through navigation and forms, open/close dialogs with Escape, confirm focus remains trapped and returns to the trigger, and check reduced motion. Check long names and filled carts at 320/768/1280 pixels.
-- Sign in with a non-admin account: confirm blocked UI and denied reads/writes. Sign in as owner: create, edit, soft-hide and delete a test product.
-- Upload valid images, replace/remove them, and reject oversized/non-image uploads. Verify Storage directly rejects a non-admin upload.
-- Place a test order; inspect database-priced totals and stock. Attempt a forged price, excessive quantity and simultaneous purchase of the last unit. Verify only available stock can sell. Retry with the same request ID and confirm there is one order.
-- Submit booking, quote and contact forms; check references and Inbox contents, notes/status changes and mark-paid behavior. Verify no public client can select their records.
-- Disable the network and confirm readable errors/retry; verify failed checkout retains the cart. Confirm client honeypot and 30-second throttle. These deter simple spam; add server-side CAPTCHA/rate limiting if actual traffic requires stronger protection.
-- On Netlify, refresh deep links, inspect CSP/header responses, sitemap domain and `robots.txt`, page titles, metadata and home JSON-LD.
+| Name                                          | Location / purpose                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`                                | Server only: Neon pooled runtime connection                             |
+| `JWT_SECRET`                                  | Server only: random signing secret, at least 32 bytes                   |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` | Server upload account config; cloud name/API key are public identifiers |
+| `CLOUDINARY_API_SECRET`                       | Server only: signs uploads and authenticates cleanup/verification       |
+| `VITE_CLOUDINARY_CLOUD_NAME`                  | Public optional build value; never put a secret here                    |
+| `MIGRATION_DATABASE_URL`                      | Optional local privileged pooled URL for setup scripts only             |
+| `SITE_URL`                                    | Build: canonical HTTPS domain for sitemap; falls back to Netlify `URL`  |
 
-## Data and assumptions
+Use `.env` locally and Netlify's private environment settings in production. Server variables must include Functions scope. A variable prefixed `VITE_` can enter the browser bundle. `.env`, `.netlify`, build outputs and dependencies are ignored by Git. No default admin or password is seeded.
 
-Real: business name, contact details, address, Facebook/Maps links and the provided founder background/artwork. Sample: all 16 product listings, descriptions/specifications, prices, stock and five starting-price values. The founder bio is editable in admin; no reviews, certifications, project counts or guarantees were invented. Hours default to 9 AM–8 PM with operating days explicitly unconfirmed. Service prices live in `src/data/services.js`; all prices marked `*` require inspection, device condition, parts and agreed scope. GPU service is not suitable for every model.
+## Security design
 
-UI is English, peso formatting uses `toLocaleString('en-PH')`, and business dates use Asia/Manila. The prototype's navigation “Custom Projects” maps to `/quote`, “Contact” maps to `/about#contact`, and each product supports its own URL with a dialog. The app uses React components and a small `htm` template helper for the directly ported customer layouts; new forms and admin components use JSX. User content is rendered as text, never raw HTML.
+- **Server boundary:** `server/app.mjs` dispatches a single Netlify function. Shared modules handle Zod schemas, limits, sessions, CSRF and consistent `{error:{code,message,fields?}}` errors. Browser guards provide UX; every admin route independently verifies the signed token and current `admin_users` record. Query parameters and customer values are bound SQL parameters; dynamic table/column/sort choices come from explicit allowlists. Public product reads always require `visible=true`; settings expose only known public keys. Public writes cannot supply administrative status, notes, timestamps or IDs.
+- **Order integrity:** `POST /api/orders` strips client prices/totals and calls the plain invoker `place_order` PL/pgSQL function through a Neon HTTP transaction. The function locks rows in UUID order, rejects hidden or insufficient stock, reads current database prices/settings, inserts the order/items and decrements inventory atomically. A random request UUID and transaction advisory lock make retrying the same checkout idempotent. The database does not trust browser stock or price calculations.
+- **Admin sessions:** passwords use portable `bcryptjs`, cost 12, avoiding native binary compatibility issues in Functions. Admin creation requires a hidden terminal prompt, 12+ characters and at most 72 UTF-8 bytes. `jose` HS256 JWTs expire after eight hours, with fixed issuer/audience and algorithm. Tokens live in `__Host-tt_session`, an HttpOnly, Secure, SameSite=Strict, Path `/` cookie; never localStorage. Every protected request verifies the admin still exists. Logout clears the cookie; a copied token remains valid until expiry or secret rotation unless its admin is removed, which is the stated minimal stateless-session tradeoff.
+- **CSRF:** state-changing requests, including login, require matching Origin, JSON Content-Type, and `X-Requested-With: TwoTech`. No CORS wildcard is supplied. This applies through both `/api` rewrites and direct function URLs. Browser requests use same-origin credentials.
+- **Abuse controls:** login reserves an attempt under a database advisory lock before password verification and locks an email **or** IP after five attempts in fifteen minutes. Responses stay generic. Public writes use database-backed atomic per-IP counters (ten requests/minute shared across inquiry forms; ten/minute for orders); signed image requests have their own six/minute limit. Netlify's trusted context IP is used, not an arbitrary forwarded header. Old counter/attempt records are pruned. Honeypots, payload/field bounds and browser throttling complement these checks. Provider-level DDoS controls and a CAPTCHA can be added if real traffic requires them.
+- **Image safety:** the browser validates the source image, compresses/resizes it and uploads directly to Cloudinary with server-signed fixed format, namespace, transform and overwrite parameters. API secrets never leave Functions. Before a product save, the server verifies the asset's real metadata, exact HTTPS account URL and public ID, allowed raster format, 2 MB maximum and 1200-pixel bounds. Replaced/deleted images are cleaned up server-side where possible. Per-preset file-size caps are not supported by Cloudinary; oversized uploads by an authorized admin can temporarily use provider storage but cannot be attached to products. Clean up unlinked assets in the Media Library after interrupted uploads or cleanup failures.
+- **Errors and headers:** no SQL messages, password hashes, connection strings or stack traces are returned. Static pages receive CSP, framing, MIME-sniffing, referrer and HTTPS protections. Function JSON responses set their own safety/cache headers because static Netlify header rules do not cover function output. `/admin/*` is noindex.
 
-Six phase commits capture scaffold/UI, database, database reads, admin, transactional forms/Inbox and deployment/readiness checks. See `qa/verification.md` for the completed local checks and remaining external checks.
+## API
+
+Public: `GET /api/products` (optional `q`, `category`, `maxPrice`, `sort=featured|lo|hi`), `GET /api/products/:id`, `GET /api/settings`, `POST /api/orders`, `POST /api/bookings`, `POST /api/quotes`, `POST /api/messages`.
+
+Admin: `POST /api/admin/login`, `POST /api/admin/logout`, `GET /api/admin/me`, `GET/POST /api/admin/products`, `PATCH/DELETE /api/admin/products/:id`, `POST /api/admin/upload-signature`, `DELETE /api/admin/images` (unlinked upload cleanup), `GET /api/admin/inbox?type=orders|bookings|quotes|messages`, `PATCH /api/admin/inbox/:type/:id`, `GET/PUT /api/admin/settings`, `GET /api/admin/dashboard`.
+
+Public GET responses use `max-age=60, stale-while-revalidate=300`. Admin responses/writes are no-store, and successful edits make the same browser's public reads bypass cache for a minute. Other visitors may see a stale catalog for 60 seconds plus up to 300 seconds while revalidating. Checkout remains authoritative against current database rows. No Realtime dependency is needed. Requests refresh on navigation/focus; reads and idempotent orders retry once on timeout/5xx. Other POSTs are not automatically retried, to avoid duplicates.
+
+## Deployment
+
+See [the tutorial](docs/SETUP_TUTORIAL.md) for all steps. Import the GitHub repo into Netlify, select your deployment branch, use `npm run build`, publish `dist`, and use `netlify/functions`. Configure production Function secrets, isolate Deploy Preview secrets, then redeploy. The API rewrite comes before the SPA fallback. Apply production migrations and create the owner manually; builds never run migrations or create credentials. Verify deep links, JSON API responses, admin session cookies, images, stock and request records after deployment.
+
+No GitHub remote push, hosted Neon migration, real Cloudinary upload, or live Netlify publication was performed because account credentials/project access were not provided. Local PostgreSQL tests and provider mocks verify the implementation, not an unconfigured external account.
+
+## Tests and manual QA
+
+```sh
+npm run lint
+npm test
+npm run test:db
+npm run build
+npm run format:check
+```
+
+Tests execute the actual SQL in local PostgreSQL/PGlite and call the real function handlers with injected database/provider adapters. They cover price/total tampering, stock decrement, overselling/parallel last-unit requests, hidden products, every unauthenticated admin route, CSRF, generic login throttling, forged tokens, invalid/oversized/malformed inputs, honeypots, public settings allowlisting, sanitized errors and image signatures/metadata. PGlite serializes its single connection: the parallel test verifies request outcomes, not independent Neon network sessions. Repeat the last-unit race on an isolated hosted Neon branch before launch. Frontend tests cover validation, cart logic, formatting, fallback/retry, checkout and dialog focus.
+
+Original public and admin layouts were checked at 320/768/1280 pixels. An isolated `/qa/admin.html` development-only fixture supports UI layout checks without live writes; it is not part of `dist` or a production auth bypass. See [verification notes](qa/verification.md).
+
+Connected manual checklist:
+
+- Create a dev admin; verify login, logout, session expiry and rejected missing/foreign-origin mutations.
+- CRUD and hide a sample product; upload, replace and remove an image; check Cloudinary cleanup.
+- Place a sample order, check server total and stock, retry its request ID, attempt excessive quantity and two last-unit purchases.
+- Submit booking/quote/contact forms and inspect Inbox, notes, statuses and verified manual-payment marking.
+- Disable the network and test retry without losing cart/forms. Verify a cold database produces a useful loading message.
+- Test keyboard focus/Escape, reduced motion, filled dialogs/carts and long text at 320/768/1280 pixels.
+- On Netlify, directly refresh `/book` and `/admin/login`, check function JSON/security headers, final sitemap domain and admin noindex.
+
+## Sample data and operating assumptions
+
+Real: business name, supplied artwork, founder background, contact details, address and Facebook/Maps links. Sample: all 16 catalog entries, stock, specifications/prices and service starting prices. Hours remain editable at 9 AM–8 PM with operating days unconfirmed. No reviews, certifications or guarantees were invented. Business dates use Asia/Manila; prices use `toLocaleString('en-PH')`.
+
+Cash and Bank/GCash manual transfer are the only payment methods. Payment/order demo labels remain until the owner confirms real instructions; connected APIs save actual records. Transfers start as `awaiting_payment`; only the admin marks them paid after verification. No card data is collected, no payment processor is implemented, and no automatic email/SMS or refund workflow is implied. Cancelled orders do not auto-restock; the owner checks fulfilment then adjusts inventory.
+
+Free compute can suspend and wake, and compute/storage/bandwidth allowances change. Check the official [Neon](https://neon.com/pricing), [Netlify](https://www.netlify.com/pricing/) and [Cloudinary](https://cloudinary.com/pricing) pricing pages and monitor your account usage. Route-specific metadata/JSON-LD update in the browser; non-JavaScript social crawlers may need prerendering for per-route previews.

@@ -56,7 +56,12 @@ export default function Login() {
             {error}
           </p>
         )}
-        {(auth.expired || location.state?.sessionExpired) && <p role="status" className="text-goldText">Your session expired. Please sign in again.</p>}        <button className="btn bp" disabled={busy}>
+        {(auth.expired || location.state?.sessionExpired) && (
+          <p role="status" className="text-goldText">
+            Your session expired. Please sign in again.
+          </p>
+        )}{" "}
+        <button className="btn bp" disabled={busy}>
           {busy ? "Signing in…" : "Sign in"}
         </button>
         <a href="/" className="btn bs">
@@ -66,4 +71,3 @@ export default function Login() {
     </div>
   );
 }
-

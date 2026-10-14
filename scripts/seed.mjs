@@ -11,4 +11,3 @@ fs.writeFileSync(
     ).join("\n") +
     `\ninsert into public.settings(id,data) values(1,${q(JSON.stringify(defaults))}::jsonb) on conflict(id) do nothing;\n`,
 );
-

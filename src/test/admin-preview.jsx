@@ -51,6 +51,13 @@ const rows = {
 };
 api.products = async () => catalog;
 api.settings = async () => settings;
+api.dashboard = async () => ({
+  listed: catalog.filter((p) => p.visible).length,
+  low_stock: catalog.filter((p) => p.stock <= 5).length,
+  orders: rows.orders.length,
+  pending: 0,
+  restock: catalog.filter((p) => p.stock <= 5),
+});
 api.inbox = async (table) => rows[table];
 api.saveProduct = async (p) => {
   catalog = p.id
@@ -71,7 +78,7 @@ api.updateRecord = async (table, id, patch) => {
 };
 api.uploadImage = async () => {
   throw new Error(
-    "Live uploads are disabled in the layout fixture. Use connected Supabase QA for upload verification.",
+    "Live uploads are disabled in the layout fixture. Use connected Neon/API QA for upload verification.",
   );
 };
 api.logout = async () => {};

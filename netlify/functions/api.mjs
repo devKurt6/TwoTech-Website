@@ -1,2 +1,3 @@
 import {createHandler} from '../../server/app.mjs';
-export default createHandler();
+import {createAdminHandler} from '../../server/admin.mjs';
+export default createHandler({adminHandler:createAdminHandler()});

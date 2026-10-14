@@ -1,1 +1,15 @@
-export default function Toast({message}){return <div role="status" aria-live="polite" className={message?'fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-ink text-white rounded-xl p-4 max-w-[90vw] shadow-xl':''}>{message}</div>}
+export default function Toast({ message }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={
+        message
+          ? "fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-ink text-white rounded-xl p-4 max-w-[90vw] shadow-xl"
+          : ""
+      }
+    >
+      {message}
+    </div>
+  );
+}

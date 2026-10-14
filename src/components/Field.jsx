@@ -1,2 +1,29 @@
-import {useId,cloneElement,isValidElement} from 'react';
-export default function Field({label,error,help,children}){const id=useId();return <div className="text-sm font-semibold"><label htmlFor={id}>{label}</label>{isValidElement(children)?cloneElement(children,{id,'aria-invalid':!!error,'aria-describedby':error||help?id+'-help':undefined}):children}{(error||help)&&<p id={id+'-help'} role={error?'alert':undefined} className={error?'text-red-700 mt-1':'text-stone-600 text-xs mt-1 font-normal'}>{error||help}</p>}</div>}
+import { useId, cloneElement, isValidElement } from "react";
+export default function Field({ label, error, help, children }) {
+  const id = useId();
+  return (
+    <div className="text-sm font-semibold">
+      <label htmlFor={id}>{label}</label>
+      {isValidElement(children)
+        ? cloneElement(children, {
+            id,
+            "aria-invalid": !!error,
+            "aria-describedby": error || help ? id + "-help" : undefined,
+          })
+        : children}
+      {(error || help) && (
+        <p
+          id={id + "-help"}
+          role={error ? "alert" : undefined}
+          className={
+            error
+              ? "text-red-700 mt-1"
+              : "text-stone-600 text-xs mt-1 font-normal"
+          }
+        >
+          {error || help}
+        </p>
+      )}
+    </div>
+  );
+}

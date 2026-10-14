@@ -1,1 +1,1 @@
-export const P=n=>'₱'+Number(n).toLocaleString('en-PH');
+export const P = (n) => "₱" + Number(n).toLocaleString("en-PH");

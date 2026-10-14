@@ -1,1 +1,15 @@
-export default {content:['./index.html','./src/**/*.{js,jsx}'],theme:{extend:{colors:{ink:'#111111',gold:'#F7B52C',goldText:'#8A5A00',cream:'#FAF8F3'},fontFamily:{sans:['Manrope','system-ui','sans-serif']}}},plugins:[]};
+export default {
+  content: ["./index.html", "./src/**/*.{js,jsx}"],
+  theme: {
+    extend: {
+      colors: {
+        ink: "#111111",
+        gold: "#F7B52C",
+        goldText: "#8A5A00",
+        cream: "#FAF8F3",
+      },
+      fontFamily: { sans: ["Manrope", "system-ui", "sans-serif"] },
+    },
+  },
+  plugins: [],
+};

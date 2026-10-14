@@ -1,3 +1,146 @@
-import {useState} from 'react';import {useSettings} from '../hooks/useSettings';import DataState from '../components/DataState';import Field from '../components/Field';import Toast from '../components/Toast';import {api} from '../lib/api';import {emailValid,phoneValid} from '../lib/validators';
-function Editor({data}){const [f,setF]=useState(data),[errors,setErrors]=useState({}),[busy,setBusy]=useState(false),[toast,setToast]=useState('');const fields=[['headline','Home page headline'],['banner','Announcement banner (optional)'],['phone','Phone'],['email','Email'],['address','Address'],['hours','Business hours'],['facebook','Facebook page link'],['delivery_fee','Delivery fee (₱)'],['payment_instructions','Payment instructions'],['founder_bio','Founder bio'],['low_stock_threshold','Low stock threshold']];async function submit(e){e.preventDefault();const x={};for(const [k] of fields)if(k!=='banner'&&(String(f[k]).trim().length===0||String(f[k]).length>5000))x[k]='Enter a value up to 5,000 characters.';if(!emailValid(f.email))x.email='Enter a valid email.';if(!phoneValid(f.phone))x.phone='Enter a PH mobile number.';try{const url=new URL(f.facebook);if(url.protocol!=='https:'||!/(^|\.)facebook\.com$/.test(url.hostname))x.facebook='Enter an HTTPS Facebook link.'}catch{x.facebook='Enter a full HTTPS Facebook link.'}if(!Number.isFinite(+f.delivery_fee)||+f.delivery_fee<0||+f.delivery_fee>999999)x.delivery_fee='Enter a delivery fee from 0 to 999,999.';if(!Number.isInteger(+f.low_stock_threshold)||+f.low_stock_threshold<0)x.low_stock_threshold='Enter a whole number, 0 or more.';setErrors(x);if(Object.keys(x).length)return;setBusy(true);try{await api.saveSettings({...f,delivery_fee:+f.delivery_fee,low_stock_threshold:+f.low_stock_threshold});setToast('Website details saved')}catch(err){setErrors({form:err.message})}finally{setBusy(false)}}return <div className="grid lg:grid-cols-2 gap-5 mt-4"><form onSubmit={submit} className="card p-5 grid gap-3" noValidate>{fields.map(([k,l])=><Field key={k} label={l} error={errors[k]}>{['headline','founder_bio','payment_instructions'].includes(k)?<textarea className="in mt-1" rows={3} maxLength={5000} value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/>:<input className="in mt-1" type={['delivery_fee','low_stock_threshold'].includes(k)?'number':k==='email'?'email':'text'} value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/>}</Field>)}{errors.form&&<p role="alert" className="text-red-700">{errors.form}</p>}<button className="btn bp" disabled={busy}>{busy?'Saving…':'Save changes'}</button></form><div><h2 className="font-bold mb-2">Live preview</h2><div className="rounded-2xl bg-ink text-stone-300 p-5 text-sm grid gap-2">{f.banner&&<p className="bg-gold text-ink font-bold rounded-lg p-3">{f.banner}</p>}<p className="text-white text-xl font-extrabold">{f.headline}</p><hr className="border-white/20 my-2"/><p>Phone: {f.phone}</p><p>Email: {f.email}</p><p>{f.address}</p><p>Hours: {f.hours}</p><p>Delivery fee: ₱{f.delivery_fee}</p><p>{f.payment_instructions}</p><p>{f.founder_bio}</p></div></div><Toast message={toast}/></div>}
-export default function Settings(){const resource=useSettings();return <><h1 className="text-2xl font-extrabold">Website settings</h1><p className="text-stone-600 mt-1">Edit the details shown on the public website. Do not put secrets here.</p><DataState resource={resource}><Editor data={resource.data}/></DataState></>}
+import { useToast } from "../hooks/useToast";
+import { useState } from "react";
+import { useSettings } from "../hooks/useSettings";
+import DataState from "../components/DataState";
+import Field from "../components/Field";
+import Toast from "../components/Toast";
+import { api } from "../lib/api";
+import { emailValid, phoneValid } from "../lib/validators";
+function Editor({ data }) {
+  const [f, setF] = useState(data),
+    [errors, setErrors] = useState({}),
+    [busy, setBusy] = useState(false),
+    [toast, setToast] = useToast();
+  const fields = [
+    ["headline", "Home page headline"],
+    ["banner", "Announcement banner (optional)"],
+    ["phone", "Phone"],
+    ["email", "Email"],
+    ["address", "Address"],
+    ["hours", "Business hours"],
+    ["facebook", "Facebook page link"],
+    ["delivery_fee", "Delivery fee (₱)"],
+    ["payment_instructions", "Payment instructions"],
+    ["founder_bio", "Founder bio"],
+    ["low_stock_threshold", "Low stock threshold"],
+  ];
+  async function submit(e) {
+    e.preventDefault();
+    const x = {};
+    for (const [k] of fields)
+      if (
+        k !== "banner" &&
+        (String(f[k]).trim().length === 0 || String(f[k]).length > 5000)
+      )
+        x[k] = "Enter a value up to 5,000 characters.";
+    if (!emailValid(f.email)) x.email = "Enter a valid email.";
+    if (!phoneValid(f.phone)) x.phone = "Enter a PH mobile number.";
+    try {
+      const url = new URL(f.facebook);
+      if (
+        url.protocol !== "https:" ||
+        !/(^|\.)facebook\.com$/.test(url.hostname)
+      )
+        x.facebook = "Enter an HTTPS Facebook link.";
+    } catch {
+      x.facebook = "Enter a full HTTPS Facebook link.";
+    }
+    if (
+      !Number.isFinite(+f.delivery_fee) ||
+      +f.delivery_fee < 0 ||
+      +f.delivery_fee > 999999
+    )
+      x.delivery_fee = "Enter a delivery fee from 0 to 999,999.";
+    if (!Number.isInteger(+f.low_stock_threshold) || +f.low_stock_threshold < 0)
+      x.low_stock_threshold = "Enter a whole number, 0 or more.";
+    setErrors(x);
+    if (Object.keys(x).length) return;
+    setBusy(true);
+    try {
+      await api.saveSettings({
+        ...f,
+        delivery_fee: +f.delivery_fee,
+        low_stock_threshold: +f.low_stock_threshold,
+      });
+      setToast("Website details saved");
+    } catch (err) {
+      setErrors({ form: err.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="grid lg:grid-cols-2 gap-5 mt-4">
+      <form onSubmit={submit} className="card p-5 grid gap-3" noValidate>
+        {fields.map(([k, l]) => (
+          <Field key={k} label={l} error={errors[k]}>
+            {["headline", "founder_bio", "payment_instructions"].includes(k) ? (
+              <textarea
+                className="in mt-1"
+                rows={3}
+                maxLength={5000}
+                value={f[k]}
+                onChange={(e) => setF({ ...f, [k]: e.target.value })}
+              />
+            ) : (
+              <input
+                className="in mt-1"
+                type={
+                  ["delivery_fee", "low_stock_threshold"].includes(k)
+                    ? "number"
+                    : k === "email"
+                      ? "email"
+                      : "text"
+                }
+                value={f[k]}
+                onChange={(e) => setF({ ...f, [k]: e.target.value })}
+              />
+            )}
+          </Field>
+        ))}
+        {errors.form && (
+          <p role="alert" className="text-red-700">
+            {errors.form}
+          </p>
+        )}
+        <button className="btn bp" disabled={busy}>
+          {busy ? "Saving…" : "Save changes"}
+        </button>
+      </form>
+      <div>
+        <h2 className="font-bold mb-2">Live preview</h2>
+        <div className="rounded-2xl bg-ink text-stone-300 p-5 text-sm grid gap-2">
+          {f.banner && (
+            <p className="bg-gold text-ink font-bold rounded-lg p-3">
+              {f.banner}
+            </p>
+          )}
+          <p className="text-white text-xl font-extrabold">{f.headline}</p>
+          <hr className="border-white/20 my-2" />
+          <p>Phone: {f.phone}</p>
+          <p>Email: {f.email}</p>
+          <p>{f.address}</p>
+          <p>Hours: {f.hours}</p>
+          <p>Delivery fee: ₱{f.delivery_fee}</p>
+          <p>{f.payment_instructions}</p>
+          <p>{f.founder_bio}</p>
+        </div>
+      </div>
+      <Toast message={toast} />
+    </div>
+  );
+}
+export default function Settings() {
+  const resource = useSettings();
+  return (
+    <>
+      <h1 className="text-2xl font-extrabold">Website settings</h1>
+      <p className="text-stone-600 mt-1">
+        Edit the details shown on the public website. Do not put secrets here.
+      </p>
+      <DataState resource={resource}>
+        <Editor data={resource.data} />
+      </DataState>
+    </>
+  );
+}

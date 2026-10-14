@@ -27,13 +27,6 @@ export default function Products() {
     setError("");
     try {
       await api.deleteProduct(del.id);
-      if (del.image_path) {
-        try {
-          await api.removeImage(del.image_path);
-        } catch {
-          setToast("Product deleted. Remove its unused image from Storage.");
-        }
-      }
       setDel(null);
       resource.reload();
       setToast("Product deleted");
@@ -171,3 +164,4 @@ export default function Products() {
     </>
   );
 }
+

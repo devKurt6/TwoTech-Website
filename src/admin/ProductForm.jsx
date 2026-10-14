@@ -11,7 +11,7 @@ export default function ProductForm({ product, onSaved, onClose }) {
         stock: "",
         desc: "",
         specs: "",
-        image_path: null,
+        image_url: null, image_public_id: null,
         visible: true,
       },
     ),
@@ -52,25 +52,14 @@ export default function ProductForm({ product, onSaved, onClose }) {
     let uploaded;
     try {
       uploaded = file ? await api.uploadImage(file) : null;
-      const path = uploaded || f.image_path;
-      await api.saveProduct({ ...f, image_path: path });
-      if (product?.image_path && product.image_path !== path) {
-        try {
-          await api.removeImage(product.image_path);
-        } catch {
-          onSaved(
-            "Saved. Previous image cleanup failed; remove it from Storage when convenient.",
-          );
-          return;
-        }
-      }
+      await api.saveProduct({ ...f, ...(uploaded || {}) });
       onSaved(product ? "Changes saved" : "Product added");
     } catch (err) {
       if (uploaded) {
         try {
-          await api.removeImage(uploaded);
+          await api.removeImage(uploaded.image_public_id);
         } catch {
-          /* Unlinked upload can be cleaned from Storage. */
+          /* Unlinked upload can be cleaned from Cloudinary. */
         }
       }
       setErrors({ form: err.message });
@@ -175,11 +164,11 @@ export default function ProductForm({ product, onSaved, onClose }) {
             onChange={pick}
           />
         </Field>
-        {(preview || f.image_path) && (
+        {(preview || f.image_url) && (
           <div className="flex items-center gap-3 mt-2">
             <img
               className="w-24 h-20 object-cover rounded-lg"
-              src={preview || imageURL(f.image_path)}
+              src={preview || imageURL(f.image_url)}
               alt="Product preview"
             />
             <button
@@ -187,7 +176,7 @@ export default function ProductForm({ product, onSaved, onClose }) {
               className="btn bx"
               onClick={() => {
                 setFile(null);
-                setF({ ...f, image_path: null });
+                setF({ ...f, image_url: null, image_public_id: null });
               }}
             >
               Remove photo
@@ -216,3 +205,4 @@ export default function ProductForm({ product, onSaved, onClose }) {
     </form>
   );
 }
+

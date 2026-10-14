@@ -1,3 +1,4 @@
 import {createHandler} from '../../server/app.mjs';
 import {createAdminHandler} from '../../server/admin.mjs';
-export default createHandler({adminHandler:createAdminHandler()});
+import {images} from '../../server/images.mjs';
+export default createHandler({adminHandler:createAdminHandler({images})});

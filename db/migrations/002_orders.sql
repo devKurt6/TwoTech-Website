@@ -1,5 +1,5 @@
 alter table public.orders add column request_id uuid unique;
-create function public.place_order(customer jsonb,items jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
+create function public.place_order(customer jsonb,items jsonb) returns jsonb language plpgsql security invoker set search_path='' as $$
 declare
  line record; product public.products%rowtype; existing public.orders%rowtype;
  order_id uuid; checkout_id uuid; subtotal numeric(10,2):=0; fee numeric(10,2):=0; total numeric(10,2); reference text;
@@ -46,7 +46,7 @@ begin
  return jsonb_build_object('ref',reference,'total',total);
 end $$;
 revoke all on function public.place_order(jsonb,jsonb) from public;
-grant execute on function public.place_order(jsonb,jsonb) to anon,authenticated;
+
 create function public.validate_booking_service() returns trigger language plpgsql set search_path='' as $$
 declare valid_mode boolean;
 begin
@@ -58,21 +58,3 @@ begin
  if not valid_mode then raise exception 'Choose a valid service and supported mode';end if;return new;
 end $$;
 create trigger booking_service before insert or update on public.bookings for each row execute function public.validate_booking_service();
--- Return only the new reference while preserving the public SELECT prohibition.
-create function public.submit_request(kind text,payload jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
-declare reference text;normalized_phone text;
-begin
- if jsonb_typeof(payload) is distinct from 'object' then raise exception 'Invalid request';end if;
- normalized_phone:=regexp_replace(coalesce(payload->>'phone',''),'[[:space:]-]','','g');
- if kind='bookings' then
-   if (payload->>'preferred_date')::date < (now() at time zone 'Asia/Manila')::date then raise exception 'Choose today or a later date';end if;
-   insert into public.bookings(name,email,phone,service,device,problem,preferred_date,preferred_time,mode,address) values(trim(payload->>'name'),trim(payload->>'email'),normalized_phone,payload->>'service',trim(payload->>'device'),trim(payload->>'problem'),(payload->>'preferred_date')::date,payload->>'preferred_time',payload->>'mode',nullif(trim(payload->>'address'),'')) returning ref into reference;
- elsif kind='quotes' then
-   insert into public.quotes(name,email,phone,category,title,requirements,hardware,budget,target_date,reference_link) values(trim(payload->>'name'),trim(payload->>'email'),normalized_phone,payload->>'category',trim(payload->>'title'),trim(payload->>'requirements'),payload->>'hardware',payload->>'budget',nullif(payload->>'target_date','')::date,nullif(payload->>'reference_link','')) returning ref into reference;
- elsif kind='messages' then
-   insert into public.messages(name,email,body) values(trim(payload->>'name'),trim(payload->>'email'),trim(payload->>'body')) returning ref into reference;
- else raise exception 'Unknown request type';end if;
- return jsonb_build_object('ref',reference);
-end $$;
-revoke all on function public.submit_request(text,jsonb) from public;
-grant execute on function public.submit_request(text,jsonb) to anon,authenticated;

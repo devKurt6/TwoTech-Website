@@ -3,7 +3,7 @@ import { PRODUCTS } from "../src/data/products.js";
 import { defaults } from "../src/data/settings.js";
 const q = (s) => "'" + s.replaceAll("'", "''") + "'";
 fs.writeFileSync(
-  "supabase/seed.sql",
+  "db/seed.sql",
   "-- SAMPLE products, prices, stock and descriptions. Business contact details are real.\n" +
     PRODUCTS.map(
       (p) =>
@@ -11,3 +11,4 @@ fs.writeFileSync(
     ).join("\n") +
     `\ninsert into public.settings(id,data) values(1,${q(JSON.stringify(defaults))}::jsonb) on conflict(id) do nothing;\n`,
 );
+

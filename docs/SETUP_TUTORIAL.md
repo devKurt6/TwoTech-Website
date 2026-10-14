@@ -66,6 +66,19 @@ Use a separate secret for production. Changing the secret invalidates existing a
 
 Cloudinary's current documentation states that upload presets do **not** support per-preset file-size caps. Therefore a deliberately modified upload by an already authorized admin can consume temporary storage before metadata validation refuses it. Remove unused/rejected uploads in the Media Library if needed. See [signed uploads](https://cloudinary.com/documentation/authentication_signatures) and [upload preset limitations](https://cloudinary.com/documentation/upload_presets).
 
+## Upgrade an existing site: editable services and prices
+
+For an already deployed site, apply the new database upgrade once, then deploy the latest code:
+
+1. With Node.js and the private database connection configured, run `npm run db:migrate`.
+2. Alternatively, without Node.js, open [`db/upgrade-editable-services.sql`](../db/upgrade-editable-services.sql), copy the entire file into Neon → SQL Editor on the branch/database used by Netlify, and Run. It preserves inventory, orders and owner settings, and safely skips a repeat. Use this upgrade file for an existing site; **do not run the fresh `setup-neon.sql`** there.
+3. Push the updated source to GitHub and let Netlify deploy. No new environment variable is needed. Avoid editing settings between the database upgrade and deployment of the new code.
+4. Sign in → Settings → **Services & prices**. Edit a repair starting price or an individual inclusion price, then **Save changes**. Blank individual prices hide that price; they do not remove the service. Check the public Services page.
+5. Edit titles, descriptions, inclusions, available modes or visibility as needed. Existing request history is preserved. A customer with stale choices may need to refresh.
+6. **Business details** manages booking times, quote categories and budgets (one per line), Maps link, founder name, service area, intro and existing contact/payment details. **Policies** manages privacy and orders/returns text. Custom Development remains quote-based.
+
+The database and API validate current booking/quote choices, not browser-supplied prices or availability. Prices on repair pages are starting estimates; they are not a finalized repair invoice.
+
 ## Netlify Forms email notifications
 
 The website now saves requests into Neon/admin Inbox **and** sends a notification copy to Netlify Forms. This includes bookings, quotes, contact messages and checkout orders. No new `.env` variable is required.

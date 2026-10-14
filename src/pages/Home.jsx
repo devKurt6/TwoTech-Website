@@ -1,6 +1,6 @@
 import { html } from "../lib/html";
 import { PRODUCTS } from "../data/products";
-import { SVC } from "../data/services";
+import { getServices } from "../data/services";
 import { I } from "../components/prototype";
 import { PCard } from "../components/ProductCard";
 export const Home = ({ go, add, view, products = PRODUCTS, settings }) =>
@@ -70,7 +70,7 @@ export const Home = ({ go, add, view, products = PRODUCTS, settings }) =>
     <section className="max-w-6xl mx-auto px-4 mt-14">
       <h2 className="text-2xl sm:text-3xl font-extrabold mb-5">What we do</h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        ${SVC.map(
+        ${getServices(settings).map(
           (s) =>
             html`<button
               key=${s.id}

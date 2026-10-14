@@ -10,7 +10,19 @@ import "../styles.css";
 if (!import.meta.env.DEV)
   throw new Error("QA fixtures run only in development.");
 api.products = async () => PRODUCTS;
-api.settings = async () => defaults;
+api.settings = async () => {
+  const data = structuredClone(defaults);
+  if (new URLSearchParams(location.search).get("prices") === "true") {
+    data.services
+      .filter((s) => s.starting_price !== null)
+      .forEach((s) =>
+        s.items.forEach((i) => {
+          i.price = 900;
+        }),
+      );
+  }
+  return data;
+};
 api.submit = async () => ({ ref: "REQ-QA-ONLY" });
 api.placeOrder = async (_customer, items) => ({
   ref: "ORD-QA-ONLY",

@@ -113,8 +113,8 @@ export default function App() {
             "/shop": "Shop computer parts",
             "/services": "Services",
             "/services/development": "Custom Development",
-            "/privacy": "Privacy Policy",
-            "/terms": "Orders & Returns",
+            "/privacy": settings.data.policies.privacy.title,
+            "/terms": settings.data.policies.terms.title,
             "/book": "Book a service",
             "/quote": "Custom projects",
             "/about": "About & contact",
@@ -157,6 +157,7 @@ export default function App() {
               path="/services/*"
               element={
                 <Services
+                  settings={settings.data}
                   go={go}
                   book={(id) => navigate("/book?service=" + id)}
                 />
@@ -168,11 +169,15 @@ export default function App() {
                 <Booking
                   key={location.search}
                   pre={new URLSearchParams(location.search).get("service")}
+                  settings={settings.data}
                   go={go}
                 />
               }
             />
-            <Route path="/quote" element={<Project go={go} />} />
+            <Route
+              path="/quote"
+              element={<Project go={go} settings={settings.data} />}
+            />
             <Route path="/about" element={<About go={go} />} />
             <Route path="/privacy" element={<Policy type="privacy" />} />
             <Route path="/terms" element={<Policy type="terms" />} />

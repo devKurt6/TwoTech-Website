@@ -1,5 +1,12 @@
 # Verification after the Neon migration
 
+## Admin-managed services and prices — 14 October 2026
+
+- Settings now edits group and optional individual repair starting prices, service text/inclusions/modes/visibility, booking times, quote choices, Maps/founder/service-area/intro and policy text. Public pages read the saved values; existing product pricing remains in Products.
+- Local integration checks exercise admin-save → public-read → booking/quotation inserts, reject invalid prices/current choices and direct invalid SQL inserts, and allow historical status updates after rename/hide. The upgrade preserves existing owner fees/headline; its SQL Editor companion applies once and safely skips a repeat. No hosted migration or live data write was performed.
+- Browser checked the isolated editor and public cards with individual prices at 320/768/1280 pixels, without horizontal overflow. An edited price updated the preview and persisted across fixture save/reload. See `screenshots/service-prices-admin.jpg`.
+- All 58 tests, lint, formatting, local SQL checks, production build and Netlify Function bundle pass. All three settings sections were additionally checked at the three widths; see `service-layout-results.json`.
+
 ## Netlify notification copies — 14 October 2026
 
 - Added deploy-time static registrations for bookings, quotations, messages and orders. The browser mirrors only successfully saved requests, with the database reference and a field allowlist. No extra credentials are needed.

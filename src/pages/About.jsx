@@ -10,13 +10,9 @@ export function About() {
         <h1 className="text-3xl sm:text-4xl font-extrabold mb-6">
           About Two Tech
         </h1>
-        <p className="max-w-2xl text-stone-700">
-          Two Tech (Computer Engrs' Repair Services) is a Philippines-based
-          business offering computer parts, repair and maintenance, software
-          development, automation, and embedded systems projects.
-        </p>
+        <p className="max-w-2xl text-stone-700">{s.business_intro}</p>
         <section className="card p-5 mt-6 max-w-3xl">
-          <h2 className="font-extrabold text-lg">Founder: Kurt Decena</h2>
+          <h2 className="font-extrabold text-lg">Founder: {s.founder_name}</h2>
           <p className="mt-3 text-stone-700 whitespace-pre-line">
             {s.founder_bio}
           </p>
@@ -52,10 +48,10 @@ export function About() {
                 Facebook: Engr.TwoTECH
               </a>
               <p>{s.address}</p>
-              <p>Nearby areas subject to availability.</p>
+              <p>{s.service_area}</p>
               <a
                 className="underline text-goldText min-h-11 flex items-center"
-                href="https://maps.app.goo.gl/KLWRCZbpFzx4qBjE8"
+                href={s.maps}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -68,7 +64,7 @@ export function About() {
           </div>
           <div>
             <h2 className="text-2xl font-extrabold mb-3">Send a message</h2>
-            <RequestForm kind="messages" />
+            <RequestForm kind="messages" settings={s} />
           </div>
         </section>
       </div>

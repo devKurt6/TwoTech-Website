@@ -124,7 +124,13 @@ body {
   min-width: 0;
 }
 p,
-dd {
+dd,
+h1,
+h2,
+h3,
+h4,
+li,
+legend {
   overflow-wrap: anywhere;
 }
 .menu-toggle span {

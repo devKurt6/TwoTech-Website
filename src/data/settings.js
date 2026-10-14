@@ -1,3 +1,5 @@
+import { defaultServices } from "./services.js";
+import { policies } from "./policies.js";
 export const defaults = {
   headline: "Your Partner in IT Solutions, Repairs & Custom Development.",
   banner: "",
@@ -13,4 +15,27 @@ export const defaults = {
   founder_bio:
     "Kurt Decena is a Computer Engineering graduate with IT support and software development experience.",
   low_stock_threshold: 5,
+  services: defaultServices,
+  booking_times: ["9:00 AM", "11:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"],
+  quote_categories: [
+    "Website",
+    "Desktop Application",
+    "Automation",
+    "AI/Image Processing",
+    "Embedded Systems/IoT",
+    "Other",
+  ],
+  quote_budgets: [
+    "Under ₱10,000",
+    "₱10,000 – ₱30,000",
+    "₱30,000 – ₱100,000",
+    "Above ₱100,000",
+    "Not sure yet",
+  ],
+  maps: "https://maps.app.goo.gl/KLWRCZbpFzx4qBjE8",
+  founder_name: "Kurt Decena",
+  service_area: "Nearby areas subject to availability.",
+  business_intro:
+    "Two Tech (Computer Engrs' Repair Services) is a Philippines-based business offering computer parts, repair and maintenance, software development, automation, and embedded systems projects.",
+  policies,
 };

@@ -34,9 +34,9 @@ export function csrf(req) {
   )
     fail(403, "CSRF", "Please reload the page and try again.");
 }
-export async function body(req, schema) {
+export async function body(req, schema, maxBytes = 32768) {
   const declared = Number(req.headers.get("content-length") || 0);
-  if (declared > 32768)
+  if (declared > maxBytes)
     fail(
       413,
       "TOO_LARGE",
@@ -48,7 +48,7 @@ export async function body(req, schema) {
   } catch {
     fail(400, "INVALID_JSON", "Send a valid JSON request.");
   }
-  if (Buffer.byteLength(raw) > 32768)
+  if (Buffer.byteLength(raw) > maxBytes)
     fail(
       413,
       "TOO_LARGE",
@@ -127,14 +127,7 @@ const optionalDate = z
   .default("");
 export const quoteSchema = z.object({
   ...requestBase,
-  category: z.enum([
-    "Website",
-    "Desktop Application",
-    "Automation",
-    "AI/Image Processing",
-    "Embedded Systems/IoT",
-    "Other",
-  ]),
+  category: text(1, 150),
   title: text(1, 200),
   requirements: text(20, 10000),
   hardware: z.string().max(5000).optional().default(""),

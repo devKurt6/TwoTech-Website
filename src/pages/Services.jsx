@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Wrench, Code2, Check } from "lucide-react";
-import { SVC } from "../data/services";
+import { getServices } from "../data/services";
+import { defaults } from "../data/settings";
+import { P } from "../lib/format";
 import { I } from "../components/prototype";
 function ServiceCard({ service: s, book }) {
   return (
@@ -9,7 +11,7 @@ function ServiceCard({ service: s, book }) {
         <span className="w-12 h-12 rounded-xl bg-amber-50 text-goldText grid place-items-center shrink-0">
           <I n={s.ic} s={24} />
         </span>
-        <div>
+        <div className="min-w-0">
           <h3 className="font-extrabold text-lg leading-tight">{s.t}</h3>
           <p className="text-sm font-bold text-goldText">{s.from}</p>
         </div>
@@ -20,7 +22,12 @@ function ServiceCard({ service: s, book }) {
         {s.items.map((i) => (
           <li key={i} className="flex gap-2">
             <Check size={16} className="text-emerald-700 mt-0.5 shrink-0" />
-            {i}
+            <span className="min-w-0 break-words">{i}</span>
+            {s.mode === "book" && s.item_prices?.[i] != null && (
+              <span className="ml-auto font-bold text-goldText shrink-0">
+                {P(s.item_prices[i])}*
+              </span>
+            )}
           </li>
         ))}
       </ul>
@@ -37,7 +44,8 @@ function ServiceCard({ service: s, book }) {
     </section>
   );
 }
-export const Services = ({ go, book }) => {
+export const Services = ({ go, book, settings = defaults }) => {
+  const services = getServices(settings);
   const location = useLocation(),
     navigate = useNavigate();
   const development = location.pathname === "/services/development";
@@ -120,10 +128,18 @@ export const Services = ({ go, book }) => {
               depends on inspection, device condition, parts, and agreed scope.
             </p>
             <div className="grid md:grid-cols-2 gap-5 mt-5">
-              {SVC.filter((s) => s.mode === "book").map((s) => (
-                <ServiceCard key={s.id} service={s} book={book} />
-              ))}
+              {services
+                .filter((s) => s.mode === "book")
+                .map((s) => (
+                  <ServiceCard key={s.id} service={s} book={book} />
+                ))}
             </div>
+            {!services.some((s) => s.mode === "book") && (
+              <p role="status" className="card p-5 mt-5">
+                Booking services are currently unavailable. Please contact Two
+                Tech for assistance.
+              </p>
+            )}
             <aside className="card p-5 mt-6 flex flex-wrap items-center justify-between gap-4">
               <p className="font-bold">
                 Need software, automation, or an embedded project?
@@ -157,10 +173,18 @@ export const Services = ({ go, book }) => {
               the agreed scope.
             </p>
             <div className="grid lg:grid-cols-3 gap-5 mt-6">
-              {SVC.filter((s) => s.mode === "quote").map((s) => (
-                <ServiceCard key={s.id} service={s} />
-              ))}
+              {services
+                .filter((s) => s.mode === "quote")
+                .map((s) => (
+                  <ServiceCard key={s.id} service={s} />
+                ))}
             </div>
+            {!services.some((s) => s.mode === "quote") && (
+              <p role="status" className="mt-5">
+                Custom development services are currently unavailable. Please
+                contact Two Tech for assistance.
+              </p>
+            )}
             <div className="flex flex-wrap gap-3 mt-6">
               <button className="btn bp" onClick={() => go("Custom Projects")}>
                 Request a Quote

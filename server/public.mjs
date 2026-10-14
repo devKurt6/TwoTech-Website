@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BOOKABLE } from "../src/data/services.js";
+import { getBookable } from "../src/data/services.js";
 import { defaults } from "../src/data/settings.js";
 import { legacyPaymentInstructions } from "../src/data/demoCopy.js";
 import {
@@ -26,21 +26,11 @@ const bookingSchema = z
     device: z.string().trim().min(1).max(500),
     problem: z.string().trim().min(10).max(5000),
     preferred_date: date,
-    preferred_time: z.enum([
-      "9:00 AM",
-      "11:00 AM",
-      "1:00 PM",
-      "3:00 PM",
-      "5:00 PM",
-    ]),
+    preferred_time: z.string().trim().min(1).max(150),
     mode: z.enum(["Drop-off", "Onsite", "Remote"]),
     address: z.string().trim().max(1000).optional().default(""),
     ...honeypot,
   })
-  .refine(
-    (f) => BOOKABLE.some((s) => s.n === f.service && s.modes.includes(f.mode)),
-    { path: ["mode"], message: "Choose a valid service and supported mode." },
-  )
   .refine((f) => f.mode !== "Onsite" || f.address.length >= 8, {
     path: ["address"],
     message: "Enter a full onsite address.",
@@ -150,6 +140,34 @@ export async function publicHandler(req, path, db, ip) {
   if (method === "POST" && schemas[kind]) {
     csrf(req);
     const f = await body(req, schemas[kind]);
+    if (kind !== "messages") {
+      const { rows } = await db.query(
+        "select data from public.settings where id=1",
+      );
+      const settings = publicSettings(rows[0]?.data);
+      if (
+        kind === "bookings" &&
+        (!getBookable(settings).some(
+          (s) => s.n === f.service && s.modes.includes(f.mode),
+        ) ||
+          !settings.booking_times.includes(f.preferred_time))
+      )
+        fail(
+          400,
+          "VALIDATION",
+          "This service, mode or time is no longer available. Refresh and choose an available option.",
+        );
+      if (
+        kind === "quotes" &&
+        (!settings.quote_categories.includes(f.category) ||
+          !settings.quote_budgets.includes(f.budget))
+      )
+        fail(
+          400,
+          "VALIDATION",
+          "Choose a current project category and budget range.",
+        );
+    }
     await rateLimit(db, ip, "requests");
     const columns = {
       bookings: [

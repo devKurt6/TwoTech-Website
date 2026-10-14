@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useSubmission } from "../hooks/useSubmission";
 import { api } from "../lib/api";
-import { BOOKABLE, SVC } from "../data/services";
+import { getBookable, getServices } from "../data/services";
+import { defaults } from "../data/settings";
 import { today } from "../lib/validators";
 import Field from "./Field";
 import Honeypot from "./Honeypot";
@@ -28,7 +29,9 @@ const initial = {
   reference_link: "",
   body: "",
 };
-export default function RequestForm({ kind, pre }) {
+export default function RequestForm({ kind, pre, settings = defaults }) {
+  const BOOKABLE = getBookable(settings),
+    SVC = getServices(settings);
   const [f, setF] = useState({
     ...initial,
     service: BOOKABLE.find((b) => b.g === pre)?.n || "",
@@ -196,25 +199,12 @@ export default function RequestForm({ kind, pre }) {
               {area("problem", "Problem description")}
             </div>
             {input("preferred_date", "Preferred date", "date", today())}
-            {select("preferred_time", "Preferred time", [
-              "9:00 AM",
-              "11:00 AM",
-              "1:00 PM",
-              "3:00 PM",
-              "5:00 PM",
-            ])}
+            {select("preferred_time", "Preferred time", settings.booking_times)}
           </>
         )}
         {quote && (
           <>
-            {select("category", "Project category", [
-              "Website",
-              "Desktop Application",
-              "Automation",
-              "AI/Image Processing",
-              "Embedded Systems/IoT",
-              "Other",
-            ])}
+            {select("category", "Project category", settings.quote_categories)}
             <div className="sm:col-span-2">
               {input("title", "Project title")}
             </div>
@@ -229,13 +219,7 @@ export default function RequestForm({ kind, pre }) {
             <div className="sm:col-span-2">
               {area("hardware", "Hardware requirements (optional)", 2)}
             </div>
-            {select("budget", "Estimated budget range", [
-              "Under ₱10,000",
-              "₱10,000 – ₱30,000",
-              "₱30,000 – ₱100,000",
-              "Above ₱100,000",
-              "Not sure yet",
-            ])}
+            {select("budget", "Estimated budget range", settings.quote_budgets)}
             {input("target_date", "Target completion date (optional)", "date")}
             <div className="sm:col-span-2">
               {input("reference_link", "Reference link (optional)", "url")}

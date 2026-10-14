@@ -1,5 +1,5 @@
 import RequestForm from "../components/RequestForm";
-export function Project() {
+export function Project({ settings }) {
   return (
     <div className="max-w-6xl mx-auto px-4 pt-10">
       <h1 className="text-3xl sm:text-4xl font-extrabold">Custom projects</h1>
@@ -7,7 +7,7 @@ export function Project() {
         Tell us what you want to build. We review every request before sending a
         quotation.
       </p>
-      <RequestForm kind="quotes" />
+      <RequestForm kind="quotes" settings={settings} />
     </div>
   );
 }

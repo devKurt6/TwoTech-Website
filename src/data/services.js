@@ -126,3 +126,98 @@ export const SVC = [
 export const BOOKABLE = SVC.filter((s) => s.mode === "book").flatMap((g) =>
   g.items.map((n) => ({ n, g: g.id, modes: g.modes })),
 );
+export const defaultServices = SVC.map((s) => ({
+  id: s.id,
+  title: s.t,
+  description: s.d,
+  visible: true,
+  starting_price:
+    { setup: 500, repair: 300, soft: 500, clean: 400, net: 500 }[s.id] ?? null,
+  price_label: s.id === "repair" ? "Diagnosis from" : "From",
+  items: s.items.map((name) => ({ name, price: null })),
+  modes: s.modes || [],
+}));
+export function getServices(settings) {
+  return SVC.map((s) => {
+    const c =
+      settings?.services?.find((v) => v.id === s.id) ||
+      defaultServices.find((v) => v.id === s.id);
+    return {
+      ...s,
+      t: c.title,
+      d: c.description,
+      visible: c.visible,
+      modes: c.modes,
+      from:
+        s.mode === "quote"
+          ? "Quote-based"
+          : `${c.price_label} ₱${typeof c.starting_price === "number" && Number.isFinite(c.starting_price) ? c.starting_price.toLocaleString("en-PH") : "—"}*`,
+      items: c.items.map((i) => i.name),
+      item_prices: Object.fromEntries(c.items.map((i) => [i.name, i.price])),
+    };
+  }).filter((s) => s.visible);
+}
+export const getBookable = (settings) =>
+  getServices(settings)
+    .filter((s) => s.mode === "book")
+    .flatMap((g) => g.items.map((n) => ({ n, g: g.id, modes: g.modes })));
+export function serviceErrors(services) {
+  const errors = {},
+    names = new Set();
+  if (
+    !Array.isArray(services) ||
+    services.length !== SVC.length ||
+    new Set(services.map((s) => s.id)).size !== SVC.length
+  )
+    return {
+      services:
+        "Keep all eight service groups; hide unavailable groups instead.",
+    };
+  for (const s of services) {
+    const group = SVC.find((g) => g.id === s.id);
+    if (!group) {
+      errors.services = "Unknown service group.";
+      continue;
+    }
+    const money = (n) =>
+      typeof n === "number" &&
+      Number.isFinite(n) &&
+      n >= 0 &&
+      n <= 999999 &&
+      Math.abs(n * 100 - Math.round(n * 100)) < 1e-5;
+    if (group.mode === "book" && !money(s.starting_price))
+      errors[s.id] =
+        "Enter a starting price from 0 to 999,999 with at most two decimals.";
+    if (
+      !s.title?.trim() ||
+      s.title.length > 150 ||
+      !s.description?.trim() ||
+      s.description.length > 5000
+    )
+      errors[s.id] =
+        "Enter a title (up to 150 characters) and description (up to 5,000).";
+    if (!s.price_label?.trim() || s.price_label.length > 50)
+      errors[s.id] = "Enter a price label up to 50 characters.";
+    if (!s.items?.length || s.items.length > 40)
+      errors[s.id] = "Enter 1–40 inclusions.";
+    for (const item of s.items || []) {
+      if (
+        !item.name?.trim() ||
+        item.name.length > 200 ||
+        names.has(item.name.trim())
+      )
+        errors[s.id] = "Use unique inclusion names of 1–200 characters.";
+      names.add(item.name?.trim());
+      if (item.price !== null && !money(item.price))
+        errors[s.id] =
+          "Use valid inclusion prices with at most two decimals, or leave them blank.";
+    }
+    if (
+      group.mode === "book" &&
+      (!s.modes?.length ||
+        s.modes.some((m) => !["Drop-off", "Onsite", "Remote"].includes(m)))
+    )
+      errors[s.id] = "Choose at least one supported service mode.";
+  }
+  return errors;
+}

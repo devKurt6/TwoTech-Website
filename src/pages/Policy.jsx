@@ -1,14 +1,16 @@
 import { policies } from "../data/policies";
 import { useSettings } from "../hooks/useSettings";
 export default function Policy({ type }) {
-  const policy = policies[type],
-    { data: s } = useSettings();
+  const { data: s } = useSettings();
+  const policy = s.policies?.[type] || policies[type];
   return (
     <article className="max-w-3xl mx-auto px-4 pt-10">
       <h1 className="text-3xl sm:text-4xl font-extrabold">{policy.title}</h1>
-      <p className="mt-5 p-4 rounded-xl bg-amber-50 border border-amber-200 text-goldText text-sm">
-        {policy.intro}
-      </p>
+      {policy.intro && (
+        <p className="mt-5 p-4 rounded-xl bg-amber-50 border border-amber-200 text-goldText text-sm">
+          {policy.intro}
+        </p>
+      )}
       <div className="card p-5 sm:p-8 mt-6 grid gap-6">
         {policy.sections.map(([heading, body]) => (
           <section key={heading}>

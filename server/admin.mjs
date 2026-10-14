@@ -15,6 +15,7 @@ import {
   rateLimit,
 } from "./core.mjs";
 import { publicSettings } from "./public.mjs";
+import { extraSettings } from "./settings-schema.mjs";
 const note = z.string().max(5000).nullable().optional();
 const statuses = {
   orders: [
@@ -77,6 +78,7 @@ const settingsSchema = z
     payment_instructions: z.string().trim().min(1).max(5000),
     founder_bio: z.string().trim().min(1).max(5000),
     low_stock_threshold: z.number().int().min(0).max(100000),
+    ...extraSettings,
   })
   .strict();
 // Random dummy hash keeps unknown-email verification on the same bcrypt path.
@@ -233,7 +235,16 @@ export function createAdminHandler({
       return json(publicSettings(rows[0]?.data));
     }
     if (path === "/admin/settings" && method === "PUT") {
-      const raw = await body(req, z.object({}).passthrough());
+      const readiness = await db.query(
+        "select to_regprocedure('public.validate_quote_choices()') is not null as ready",
+      );
+      if (!readiness.rows[0]?.ready)
+        fail(
+          503,
+          "SETUP_REQUIRED",
+          "Apply the editable-services database migration before saving website settings.",
+        );
+      const raw = await body(req, z.object({}).passthrough(), 1048576);
       if (typeof raw.phone === "string")
         raw.phone = raw.phone.replace(/[\s-]/g, "");
       const parsed = settingsSchema.safeParse(raw);

@@ -3,11 +3,11 @@
 Removing development notices does not verify inventory, payment arrangements or business policies. Complete these items before accepting customer orders.
 
 - [ ] Replace or hide all 16 seed products, prices, stock counts, descriptions and specifications with actual inventory. Upload real product photos through Admin → Products.
-- [ ] Confirm every service starting price in `src/data/services.js`. Prices marked * remain estimates subject to inspection, device condition, parts and agreed scope. Confirm supported service modes and GPU-model suitability.
+- [ ] Apply the editable-services upgrade to an existing database, then confirm every service starting price in Admin → Settings → Services & prices. Individual inclusion prices are optional. Prices marked * remain estimates subject to inspection, device condition, parts and agreed scope. Confirm supported modes, booking times, service visibility and GPU-model suitability.
 - [ ] Confirm the 9 AM–8 PM hours and actual operating days in Admin → Settings. Check phone, email, address, founder bio, announcement and headline.
 - [ ] Confirm the supplied `/public/logo.png` is the final approved logo; replace it if needed.
 - [ ] Enter verified Bank/GCash instructions and the delivery fee in Settings. Confirm delivery coverage, payment deadlines and reservation policy. Never request card details.
-- [ ] Review and finalize `/privacy` and `/terms` (text in `src/data/policies.js`). Complete retention, data-request handling, provider/delivery arrangements, cancellation, returns, refunds and device-handling placeholders. These drafts make no legal compliance claim.
+- [ ] Review and finalize `/privacy` and `/terms` through Admin → Settings → Policies. Complete retention, data-request handling, provider/delivery arrangements, cancellation, returns, refunds and device-handling placeholders. These drafts make no legal compliance claim.
 - [ ] Configure production Netlify environment variables: `DATABASE_URL`, `JWT_SECRET`, Cloudinary cloud name/API key/API secret, optional public `VITE_CLOUDINARY_CLOUD_NAME`, and final HTTPS `SITE_URL`. Include Functions scope for server values. Keep owner-only `MIGRATION_DATABASE_URL` local. Never commit `.env` or secrets.
 - [ ] Leave `VITE_DEMO_MODE` unset or `false` for the business site, then redeploy. Portfolio mode changes copy only; it does not disable database writes. Use a separate database for that mode.
 - [ ] Apply required database migrations on the same Neon branch/database used by Netlify. Never reset a live database or reinitialize it with the fresh-setup SQL.

@@ -38,7 +38,7 @@ export default function Footer({ settings: s }) {
           <h2 className="text-white font-bold mb-2">Hours & area</h2>
           <p>{s.hours}</p>
           <p className="mt-2">{s.address}</p>
-          <p>Nearby areas subject to availability.</p>
+          <p>{s.service_area}</p>
         </div>
       </div>
       <p className="text-center text-xs pb-6 px-4">

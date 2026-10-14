@@ -9,6 +9,7 @@ import Honeypot from "../components/Honeypot";
 import Confirmation from "../components/Confirmation";
 import EmptyState from "../components/EmptyState";
 import FormConsent from "../components/FormConsent";
+import NotificationStatus from "../components/NotificationStatus";
 export function Cart({ items, setQty, clear, settings }) {
   const [step, setStep] = useState("cart"),
     [f, setF] = useState({
@@ -23,30 +24,45 @@ export function Cart({ items, setQty, clear, settings }) {
   const attempt = useRef(null);
   const [locked, setLocked] = useState(false);
   const [receipt, setReceipt] = useState([]);
-  const submission = useSubmission("orders", async (customer) => {
-    attempt.current ??= {
-      customer: { ...customer, request_id: requestId.current },
-      items: items.map((i) => ({ productId: i.p.id, qty: i.q })),
-      receipt: items,
-    };
-    setLocked(true);
-    try {
-      const result = await api.placeOrder(
-        attempt.current.customer,
-        attempt.current.items,
-      );
-      setReceipt(attempt.current.receipt);
-      clear();
-      return result;
-    } catch (error) {
-      if (error.status >= 400 && error.status < 500) {
-        attempt.current = null;
-        requestId.current = crypto.randomUUID();
-        setLocked(false);
+  const submission = useSubmission(
+    "orders",
+    async (customer) => {
+      attempt.current ??= {
+        customer: { ...customer, request_id: requestId.current },
+        items: items.map((i) => ({ productId: i.p.id, qty: i.q })),
+        receipt: items,
+      };
+      setLocked(true);
+      try {
+        const result = await api.placeOrder(
+          attempt.current.customer,
+          attempt.current.items,
+        );
+        setReceipt(attempt.current.receipt);
+        clear();
+        return result;
+      } catch (error) {
+        if (error.status >= 400 && error.status < 500) {
+          attempt.current = null;
+          requestId.current = crypto.randomUUID();
+          setLocked(false);
+        }
+        throw error;
       }
-      throw error;
-    }
-  });
+    },
+    (customer, result) => ({
+      ...customer,
+      items: (attempt.current?.receipt || items)
+        .map((i) => `${i.q} × ${i.p.name} (product ${i.p.id})`)
+        .join("\n"),
+      total: result.total,
+      currency: "PHP",
+      payment_status:
+        customer.payment_method === "manual_transfer"
+          ? "awaiting_payment"
+          : "new",
+    }),
+  );
   const { errors, busy, done } = submission;
   const displayItems = attempt.current?.receipt || items;
   const subtotal = displayItems.reduce((a, i) => a + i.p.price * i.q, 0),
@@ -74,6 +90,7 @@ export function Cart({ items, setQty, clear, settings }) {
     <div className="max-w-3xl mx-auto px-4 pt-10">
       {done ? (
         <Confirmation title="Order received" reference={done.ref}>
+          <NotificationStatus submission={submission} />
           <ul>
             {receipt.map((i) => (
               <li key={i.p.id} className="flex justify-between gap-3 py-1">

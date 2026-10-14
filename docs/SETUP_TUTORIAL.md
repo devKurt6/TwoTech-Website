@@ -66,6 +66,20 @@ Use a separate secret for production. Changing the secret invalidates existing a
 
 Cloudinary's current documentation states that upload presets do **not** support per-preset file-size caps. Therefore a deliberately modified upload by an already authorized admin can consume temporary storage before metadata validation refuses it. Remove unused/rejected uploads in the Media Library if needed. See [signed uploads](https://cloudinary.com/documentation/authentication_signatures) and [upload preset limitations](https://cloudinary.com/documentation/upload_presets).
 
+## Netlify Forms email notifications
+
+The website now saves requests into Neon/admin Inbox **and** sends a notification copy to Netlify Forms. This includes bookings, quotes, contact messages and checkout orders. No new `.env` variable is required.
+
+1. Push the latest code to GitHub. In your Netlify project, open **Forms** and enable **form detection** if it is disabled, then redeploy. Detection happens when Netlify processes the built static HTML, so enabling it without another deploy is insufficient.
+2. After deployment, confirm four forms appear: `bookings`, `quotes`, `messages`, `orders`.
+3. Open **Configuration → Notifications → Form submission notifications** (or the notification settings linked from Forms). Edit your existing email notification to cover **any form**, or create/select notifications for all four names. A notification tied to an older form name does not automatically cover a new name.
+4. Submit one test request through each deployed form using your own test details. Verify the same reference appears in **Admin Inbox**, **Netlify → Forms → verified submissions**, and the email notification. Check your email spam folder and Netlify spam submissions if absent. Clean up test records and reconcile order stock.
+5. If the website reports the request was saved but the notification could not be confirmed, use **Retry notification**. This retries only the copy; it does not create another database request or decrement stock again. Keep the confirmation page open until the notification attempt finishes.
+
+This copy is best-effort. Netlify acceptance does not guarantee email delivery; detection settings, spam filtering and usage limits apply. A timeout/retry can cause duplicate notification copies with the same reference. Netlify notifications are not payment confirmation: validate requests and funds using the authoritative Admin Inbox. Review the draft privacy policy for Netlify/email copy retention.
+
+Official instructions: [form detection and AJAX submissions](https://docs.netlify.com/manage/forms/setup/), [email notifications](https://docs.netlify.com/manage/forms/notifications/).
+
 ## 4. Create the database tables, sample catalog, and admin
 
 **Without Node.js (fresh database):** open [`db/setup-neon.sql`](../db/setup-neon.sql), copy the entire file into Neon → SQL Editor, select the branch/database used by Netlify's `DATABASE_URL`, and click Run. It creates all tables/functions, records migration checksums, and adds the sample catalog/settings in one transaction. The final result should show `sample_products = 16` and `settings_rows = 1`. It refuses to overwrite existing application tables. This replaces the migrate/seed commands for a fresh database; it does not create an admin account. Admin creation remains a separate step below. After setup, reload `/api/settings` and `/api/products` on your deployed domain.

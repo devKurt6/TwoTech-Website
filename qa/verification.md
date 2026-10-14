@@ -1,5 +1,12 @@
 # Verification after the Neon migration
 
+## Netlify notification copies — 14 October 2026
+
+- Added deploy-time static registrations for bookings, quotations, messages and orders. The browser mirrors only successfully saved requests, with the database reference and a field allowlist. No extra credentials are needed.
+- Automated tests verify all static registrations, URL encoding, reference correlation, secret-field exclusion, no mirror after API failure, order server totals, and notification-only retry without repeating the primary save.
+- All 50 tests, lint, formatting and the production build pass. The built registration page is served with HTTP 200 in the local production preview and contains all four definitions.
+- Live Netlify form detection, spam filtering and the owner's configured email delivery still require a redeploy and the hosted checks in the setup tutorial. No live submission or email was sent during implementation.
+
 ## Design update — 14 October 2026
 
 - 44 automated tests pass, including repair/development routing, keyboard tabs, mobile menu dismissal, rendered public-page/receipt/confirmation copy, optional portfolio banner dismissal and legacy payment-copy normalization. The rendered-copy guard runs in the production build.

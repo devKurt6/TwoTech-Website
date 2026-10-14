@@ -7,6 +7,7 @@ import Field from "./Field";
 import Honeypot from "./Honeypot";
 import Confirmation from "./Confirmation";
 import FormConsent from "./FormConsent";
+import NotificationStatus from "./NotificationStatus";
 const initial = {
   name: "",
   email: "",
@@ -101,6 +102,7 @@ export default function RequestForm({ kind, pre }) {
           setF(initial);
         }}
       >
+        <NotificationStatus submission={submission} />
         {book ? (
           <>
             <p>

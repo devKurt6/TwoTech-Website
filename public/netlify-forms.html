@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>Two Tech form registration</title>
+  </head>
+  <body>
+    <!-- Static blueprints for Netlify deploy-time detection. Actual forms are rendered by React. -->
+
+    <form
+      name="bookings"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="bookings" />
+      <input name="bot-field" />
+      <input name="reference" />
+      <input name="name" />
+      <input name="email" type="email" />
+      <input name="phone" />
+      <input name="service" />
+      <input name="device" />
+      <input name="problem" />
+      <input name="preferred_date" />
+      <input name="preferred_time" />
+      <input name="mode" />
+      <input name="address" />
+    </form>
+
+    <form
+      name="quotes"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="quotes" />
+      <input name="bot-field" />
+      <input name="reference" />
+      <input name="name" />
+      <input name="email" type="email" />
+      <input name="phone" />
+      <input name="category" />
+      <input name="title" />
+      <input name="requirements" />
+      <input name="hardware" />
+      <input name="budget" />
+      <input name="target_date" />
+      <input name="reference_link" />
+    </form>
+
+    <form
+      name="messages"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="messages" />
+      <input name="bot-field" />
+      <input name="reference" />
+      <input name="name" />
+      <input name="email" type="email" />
+      <input name="body" />
+    </form>
+
+    <form
+      name="orders"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="orders" />
+      <input name="bot-field" />
+      <input name="reference" />
+      <input name="name" />
+      <input name="email" type="email" />
+      <input name="phone" />
+      <input name="delivery_method" />
+      <input name="address" />
+      <input name="payment_method" />
+      <input name="items" />
+      <input name="total" />
+      <input name="currency" />
+      <input name="payment_status" />
+    </form>
+  </body>
+</html>

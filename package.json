@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "netlify dev",
-    "build": "node scripts/seo.mjs && vitest run src/test/production-copy.test.jsx && vite build",
+    "build": "node scripts/seo.mjs && node scripts/netlify-forms.mjs && vitest run src/test/production-copy.test.jsx && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "lint": "eslint .",

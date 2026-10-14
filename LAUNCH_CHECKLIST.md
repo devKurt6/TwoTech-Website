@@ -16,6 +16,7 @@ Removing development notices does not verify inventory, payment arrangements or 
 - [ ] Test manual transfer: order remains `awaiting_payment`; mark paid only after independently verifying funds. Test cash separately. Confirm the owner-approved next steps appear at checkout and on the receipt.
 - [ ] Test one booking end to end; confirm its reference, Inbox entry and the message that the schedule is a request until confirmed.
 - [ ] Test one quotation request and one contact message end to end, including Inbox status/notes. Confirm quotations require review first.
+- [ ] In Netlify → Forms, enable form detection and redeploy. Confirm `bookings`, `quotes`, `messages` and `orders` are detected. Configure the email notification for any form or each of those names. For each test submission, compare the saved reference in Admin Inbox, Netlify verified submissions and your email; also check spam. Review retention/access for Netlify and email copies.
 - [ ] Test image upload/replacement/removal, hiding a product, stock changes and updated Settings on the public site. Allow for public-read caching on other visitors' browsers.
 - [ ] Check 320px, 768px and 1280px layouts, keyboard focus, Escape/outside-tap menu dismissal, reduced motion, network retry and form error messages.
 - [ ] Directly refresh `/services/development`, `/shop`, `/book`, `/privacy` and `/admin/login` on Netlify. Confirm sitemap URLs, production domain and admin noindex.

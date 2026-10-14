@@ -19,6 +19,7 @@ import { PRODUCTS } from "../data/products";
 import { DEMO_ENABLED } from "../data/demoCopy";
 import { api } from "../lib/api";
 import App from "../App";
+import * as notifications from "../lib/netlifyForms";
 const productionIt = DEMO_ENABLED ? it.skip : it;
 const props = {
   settings: defaults,
@@ -45,6 +46,7 @@ function clean() {
   expect(document.title).not.toMatch(/\b(demo|prototype|sample)s?\b/i);
 }
 beforeEach(() => {
+  vi.spyOn(notifications, "submitNetlifyCopy").mockResolvedValue(true);
   sessionStorage.clear();
   localStorage.clear();
   vi.stubGlobal("scrollTo", vi.fn());

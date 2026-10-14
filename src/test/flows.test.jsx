@@ -12,7 +12,9 @@ import RequestForm from "../components/RequestForm";
 import Modal from "../components/Modal";
 import { defaults } from "../data/settings";
 import { api } from "../lib/api";
+import * as notifications from "../lib/netlifyForms";
 beforeEach(() => {
+  vi.spyOn(notifications, "submitNetlifyCopy").mockResolvedValue(true);
   sessionStorage.clear();
   vi.stubGlobal("scrollTo", vi.fn());
 });

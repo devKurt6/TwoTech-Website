@@ -14,7 +14,7 @@ export const policies = {
       ],
       [
         "Providers and storage",
-        "Netlify hosts the website and API, Neon stores submitted records, and Cloudinary stores product images. These providers process information needed to operate the site. The owner must confirm applicable provider arrangements and any additional parties involved in delivery.",
+        "Netlify hosts the website and API and receives a copy of submitted orders and inquiries through Netlify Forms for owner notifications. Neon stores the records shown in the administrator Inbox, and Cloudinary stores product images. The owner may receive these submission details by email through Netlify notifications. The owner must confirm retention and access arrangements for these copies, and any additional parties involved in delivery.",
       ],
       [
         "Browser storage and access",

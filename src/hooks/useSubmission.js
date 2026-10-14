@@ -1,11 +1,30 @@
 import { useRef, useState } from "react";
 import { validate } from "../lib/validators";
-export function useSubmission(kind, send) {
+import { submitNetlifyCopy } from "../lib/netlifyForms";
+export function useSubmission(kind, send, notificationData = (data) => data) {
   const [errors, setErrors] = useState({}),
     [busy, setBusy] = useState(false),
     [done, setDone] = useState(null),
     [honeypot, setHoneypot] = useState("");
   const inFlight = useRef(false);
+  const notificationPayload = useRef(null),
+    notificationFlight = useRef(false);
+  const [notification, setNotification] = useState(null),
+    [notificationBusy, setNotificationBusy] = useState(false);
+  async function retryNotification() {
+    if (!notificationPayload.current || notificationFlight.current) return;
+    notificationFlight.current = true;
+    setNotificationBusy(true);
+    try {
+      const { data, ref } = notificationPayload.current;
+      const ok = await submitNetlifyCopy(kind, data, ref);
+      setNotification(ok ? "received" : "failed");
+      if (ok) notificationPayload.current = null;
+    } finally {
+      notificationFlight.current = false;
+      setNotificationBusy(false);
+    }
+  }
   async function submit(e, f) {
     e.preventDefault();
     if (inFlight.current) return;
@@ -39,6 +58,11 @@ export function useSubmission(kind, send) {
       }
       setDone(result);
       scrollTo(0, 0);
+      notificationPayload.current = {
+        data: notificationData(f, result),
+        ref: result.ref,
+      };
+      await retryNotification();
     } catch (err) {
       const fields = Object.fromEntries(
         Object.entries(err.fields || {}).map(([key, value]) => [
@@ -55,5 +79,16 @@ export function useSubmission(kind, send) {
       inFlight.current = false;
     }
   }
-  return { errors, busy, done, setDone, submit, honeypot, setHoneypot };
+  return {
+    errors,
+    busy,
+    done,
+    setDone,
+    submit,
+    honeypot,
+    setHoneypot,
+    notification,
+    notificationBusy,
+    retryNotification,
+  };
 }

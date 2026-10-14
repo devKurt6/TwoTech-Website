@@ -51,6 +51,14 @@ Use `.env` locally and Netlify's private environment settings in production. Ser
 
 ## API
 
+### Netlify Forms notification copies
+
+After a successful Neon save, the browser submits a URL-encoded notification copy to Netlify Forms. The four form names are `bookings`, `quotes`, `messages`, and `orders`; each copy includes the same saved reference. Order copies include item quantities, delivery/payment choices and the server-returned total, without card details or credentials. Static detection blueprints are generated into `public/netlify-forms.html` during the build using the field allowlists in `src/data/netlifyForms.js`.
+
+In Netlify, enable form detection **before redeploying**, then confirm all four form names appear under Forms. Set the existing email notification to **any form**, or add one for each of these names. No new environment variable or email API key is needed. See [Netlify form setup](https://docs.netlify.com/manage/forms/setup/) and [notifications](https://docs.netlify.com/manage/forms/notifications/).
+
+The database remains the authoritative record. A failed notification copy never repeats the database write; the confirmation offers a notification-only retry. This is a best-effort browser copy, not a transactional outbox: leaving the page early, connection failures, disabled detection, spam filtering or provider limits can prevent notification delivery. A timed-out copy may already have been accepted, so retrying it can duplicate a Netlify notification; use the reference to correlate it. Netlify copies and emails can be submitted directly by anyone and are not proof of a valid database order or payment. Always check the reference and payment in Admin Inbox. See the setup tutorial for a hosted verification checklist.
+
 Public: `GET /api/products` (optional `q`, `category`, `maxPrice`, `sort=featured|lo|hi`), `GET /api/products/:id`, `GET /api/settings`, `POST /api/orders`, `POST /api/bookings`, `POST /api/quotes`, `POST /api/messages`.
 
 Admin: `POST /api/admin/login`, `POST /api/admin/logout`, `GET /api/admin/me`, `GET/POST /api/admin/products`, `PATCH/DELETE /api/admin/products/:id`, `POST /api/admin/upload-signature`, `DELETE /api/admin/images` (unlinked upload cleanup), `GET /api/admin/inbox?type=orders|bookings|quotes|messages`, `PATCH /api/admin/inbox/:type/:id`, `GET/PUT /api/admin/settings`, `GET /api/admin/dashboard`.

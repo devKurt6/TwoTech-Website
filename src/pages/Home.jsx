@@ -1,10 +1,7 @@
-import { demo } from "../lib/api";
-import { useState, useEffect, useMemo } from "react";
 import { html } from "../lib/html";
-import { P } from "../lib/format";
-import { CATS, PRODUCTS } from "../data/products";
-import { SVC, BOOKABLE } from "../data/services";
-import { I, Demo, Pic, Field, Modal, Head } from "../components/prototype";
+import { PRODUCTS } from "../data/products";
+import { SVC } from "../data/services";
+import { I } from "../components/prototype";
 import { PCard } from "../components/ProductCard";
 export const Home = ({ go, add, view, products = PRODUCTS, settings }) =>
   html`<div>
@@ -77,7 +74,7 @@ export const Home = ({ go, add, view, products = PRODUCTS, settings }) =>
           (s) =>
             html`<button
               key=${s.id}
-              onClick=${() => go("Services")}
+              onClick=${() => go(s.mode === "quote" ? "/services/development" : "Services")}
               className="card h p-5 text-left"
             >
               <span
@@ -118,7 +115,6 @@ export const Home = ({ go, add, view, products = PRODUCTS, settings }) =>
               />`,
           )}
       </div>
-      ${demo && html`<p className="text-xs text-slate-600 mt-3">Demo prices and inventory.</p>`}
     </section>
     <section className="max-w-6xl mx-auto px-4 mt-14">
       <h2 className="text-2xl sm:text-3xl font-extrabold mb-5">How it works</h2>

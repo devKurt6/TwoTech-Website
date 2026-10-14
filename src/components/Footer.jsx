@@ -42,9 +42,25 @@ export default function Footer({ settings: s }) {
         </div>
       </div>
       <p className="text-center text-xs pb-6 px-4">
-        Demo order and payment flows — owner verification required before
-        launch.
+        © {new Date().getFullYear()} Two Tech. All rights reserved.
       </p>
+      <nav
+        aria-label="Policies"
+        className="flex flex-wrap justify-center gap-x-6 px-4 pb-6 text-sm"
+      >
+        <Link
+          className="inline-flex items-center min-h-11 underline"
+          to="/privacy"
+        >
+          Privacy Policy
+        </Link>
+        <Link
+          className="inline-flex items-center min-h-11 underline"
+          to="/terms"
+        >
+          Orders & Returns
+        </Link>
+      </nav>
     </footer>
   );
 }

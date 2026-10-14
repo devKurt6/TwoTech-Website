@@ -1,10 +1,8 @@
-import { demo } from "../lib/api";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { html } from "../lib/html";
 import { P } from "../lib/format";
 import { CATS, PRODUCTS } from "../data/products";
-import { SVC, BOOKABLE } from "../data/services";
-import { I, Demo, Pic, Field, Modal, Head } from "../components/prototype";
+import { I, Field, Head } from "../components/prototype";
 import { PCard } from "../components/ProductCard";
 export const Shop = ({ add, view, products = PRODUCTS, settings }) => {
   const [q, setQ] = useState("");
@@ -26,7 +24,7 @@ export const Shop = ({ add, view, products = PRODUCTS, settings }) => {
     <${Head}
       t="Shop computer parts"
       s="Browse computer parts and accessories."
-    />${demo && html`<${Demo}>All prices and inventory shown here are demo data.<//>`}
+    />
     <div className="card p-4 mt-5 grid gap-3 md:grid-cols-4">
       <${Field} l="Search"
         ><div className="relative mt-1">

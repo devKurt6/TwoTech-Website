@@ -3,7 +3,18 @@ import "dotenv/config";
 const origin = new URL(
   process.env.SITE_URL || process.env.URL || "http://localhost:8888",
 ).origin;
-const paths = ["/", "/shop", "/services", "/book", "/quote", "/about", "/cart"];
+const paths = [
+  "/",
+  "/shop",
+  "/services",
+  "/services/development",
+  "/book",
+  "/quote",
+  "/about",
+  "/cart",
+  "/privacy",
+  "/terms",
+];
 fs.mkdirSync("public", { recursive: true });
 fs.writeFileSync(
   "public/sitemap.xml",

@@ -5,7 +5,6 @@ export class ApiError extends Error {
     Object.assign(this, { status, code, fields });
   }
 }
-export const demo = false;
 let freshUntil = 0;
 export function imageURL(url) {
   if (!url) return null;

@@ -63,14 +63,10 @@ it("keeps cart on network failure and shows receipt after retry", async () => {
     ["Phone", "09171234567"],
   ])
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Place order (demo flow)" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Place Order" }));
   await screen.findByRole("alert");
   expect(clear).not.toHaveBeenCalled();
-  fireEvent.click(
-    screen.getByRole("button", { name: "Place order (demo flow)" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Place Order" }));
   await screen.findByText("DEMO-ORD-TEST");
   expect(clear).toHaveBeenCalledOnce();
   expect(place.mock.calls[0][0].request_id).toBe(

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "netlify dev",
-    "build": "node scripts/seo.mjs && vite build",
+    "build": "node scripts/seo.mjs && vitest run src/test/production-copy.test.jsx && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "lint": "eslint .",
@@ -16,7 +16,8 @@
     "dev:ui": "vite --host 127.0.0.1",
     "db:migrate": "node scripts/db.mjs migrate",
     "db:seed": "node scripts/db.mjs seed",
-    "create-admin": "node scripts/create-admin.mjs"
+    "create-admin": "node scripts/create-admin.mjs",
+    "check:copy": "vitest run src/test/production-copy.test.jsx"
   },
   "dependencies": {
     "htm": "^3.1.1",

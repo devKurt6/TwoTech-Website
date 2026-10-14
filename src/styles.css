@@ -127,3 +127,69 @@ p,
 dd {
   overflow-wrap: anywhere;
 }
+.menu-toggle span {
+  position: absolute;
+  left: 11px;
+  top: 21px;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition:
+    transform 300ms ease,
+    opacity 200ms ease;
+}
+.menu-toggle span:first-child {
+  transform: translateY(-7px);
+}
+.menu-toggle span:last-child {
+  transform: translateY(7px);
+}
+.menu-toggle.is-open span:first-child {
+  transform: rotate(45deg);
+}
+.menu-toggle.is-open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.menu-toggle.is-open span:last-child {
+  transform: rotate(-45deg);
+}
+.mobile-panel {
+  width: 14rem;
+  max-width: calc(100vw - 1.5rem);
+  transform-origin: top right;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.95);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    visibility 220ms;
+}
+.mobile-panel.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+.mobile-menu-item {
+  opacity: 0;
+  transform: translateX(10px);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    background-color 150ms ease;
+  transition-delay: var(--item-delay, 0ms);
+}
+.mobile-panel.is-open .mobile-menu-item {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-panel,
+  .mobile-menu-item,
+  .menu-toggle span {
+    transition: none !important;
+    animation: none !important;
+  }
+}

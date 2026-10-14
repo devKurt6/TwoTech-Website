@@ -27,6 +27,8 @@ import { useProducts } from "./hooks/useProducts";
 import { useSettings } from "./hooks/useSettings";
 import { useCart } from "./hooks/useCart";
 import { destinations } from "./routes";
+import DemoBanner from "./components/DemoBanner";
+import Policy from "./pages/Policy";
 function ProductRoute({ products, add }) {
   const { id } = useParams(),
     navigate = useNavigate();
@@ -79,7 +81,15 @@ export default function App() {
     return (
       <Suspense fallback={<Spinner />}>
         <Routes>
-          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route
+            path="/admin/*"
+            element={
+              <>
+                <DemoBanner />
+                <AdminRoutes />
+              </>
+            }
+          />
         </Routes>
       </Suspense>
     );
@@ -102,6 +112,9 @@ export default function App() {
             "/": "Home",
             "/shop": "Shop computer parts",
             "/services": "Services",
+            "/services/development": "Custom Development",
+            "/privacy": "Privacy Policy",
+            "/terms": "Orders & Returns",
             "/book": "Book a service",
             "/quote": "Custom projects",
             "/about": "About & contact",
@@ -112,6 +125,7 @@ export default function App() {
         settings={settings.data}
       />
       <DataState resource={settings}>
+        <DemoBanner />
         <Header count={cart.count} settings={settings.data} />
         <main id="main" className="min-h-[60vh]">
           <Routes>
@@ -140,7 +154,7 @@ export default function App() {
               }
             />
             <Route
-              path="/services"
+              path="/services/*"
               element={
                 <Services
                   go={go}
@@ -160,6 +174,8 @@ export default function App() {
             />
             <Route path="/quote" element={<Project go={go} />} />
             <Route path="/about" element={<About go={go} />} />
+            <Route path="/privacy" element={<Policy type="privacy" />} />
+            <Route path="/terms" element={<Policy type="terms" />} />
             <Route
               path="/cart"
               element={

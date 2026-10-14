@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BOOKABLE } from "../src/data/services.js";
 import { defaults } from "../src/data/settings.js";
+import { legacyPaymentInstructions } from "../src/data/demoCopy.js";
 import {
   json,
   publicHeaders,
@@ -56,9 +57,12 @@ const bookingSchema = z
     { path: ["preferred_date"], message: "Choose today or a later date." },
   );
 export function publicSettings(data) {
-  return Object.fromEntries(
+  const settings = Object.fromEntries(
     Object.keys(defaults).map((key) => [key, data?.[key] ?? defaults[key]]),
   );
+  if (settings.payment_instructions === legacyPaymentInstructions)
+    settings.payment_instructions = defaults.payment_instructions;
+  return settings;
 }
 export async function publicHandler(req, path, db, ip) {
   const url = new URL(req.url),

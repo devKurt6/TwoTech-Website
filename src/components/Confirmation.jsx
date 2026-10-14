@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
-import { demo } from "../lib/api";
+import { DEMO_ENABLED, demoCopy } from "../data/demoCopy";
 export default function Confirmation({ title, reference, children, onReset }) {
   return (
     <section
@@ -10,9 +10,9 @@ export default function Confirmation({ title, reference, children, onReset }) {
     >
       <Check className="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 p-3 mb-3" />
       <h1 className="text-2xl font-extrabold">{title}</h1>
-      {demo && (
+      {DEMO_ENABLED && (
         <p className="mt-2 text-sm font-bold text-goldText bg-amber-50 rounded-lg p-2">
-          DEMO ONLY — nothing was sent or saved.
+          {demoCopy.confirmation}
         </p>
       )}
       <p className="mt-4 text-stone-600">Reference</p>

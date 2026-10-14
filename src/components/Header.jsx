@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
-import { Menu, ShoppingCart, X, Cpu } from "lucide-react";
+import { ShoppingCart, Cpu } from "lucide-react";
 export const nav = [
   ["Home", "/"],
   ["Shop", "/shop"],
@@ -12,25 +12,55 @@ export const nav = [
 export default function Header({ count, settings }) {
   const [open, setOpen] = useState(false),
     [bad, setBad] = useState(false);
+  const button = useRef(null),
+    panel = useRef(null);
   const location = useLocation();
+  const active = (path) =>
+    path === "/about#contact"
+      ? location.pathname === "/about" && location.hash === "#contact"
+      : path === "/about"
+        ? location.pathname === "/about" && !location.hash
+        : path === "/"
+          ? location.pathname === "/"
+          : location.pathname === path ||
+            location.pathname.startsWith(path + "/");
+  const close = (focus = false) => {
+    setOpen(false);
+    if (focus) button.current?.focus();
+  };
   useEffect(() => {
     setOpen(false);
   }, [location]);
   useEffect(() => {
-    const key = (e) => {
-      if (e.key === "Escape") setOpen(false);
+    if (!open) return;
+    const pointer = (e) => {
+      if (
+        !panel.current?.contains(e.target) &&
+        !button.current?.contains(e.target)
+      )
+        setOpen(false);
     };
+    const key = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        button.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", pointer);
     document.addEventListener("keydown", key);
-    return () => document.removeEventListener("keydown", key);
-  }, []);
+    return () => {
+      document.removeEventListener("pointerdown", pointer);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
   return (
-    <header className="sticky top-0 z-40 bg-ink text-white shadow-lg">
+    <header className="sticky top-0 z-40 bg-ink text-white shadow-lg isolate">
       {settings.banner && (
-        <p className="bg-gold text-ink text-center text-sm font-bold p-2">
+        <p className="relative z-50 bg-gold text-ink text-center text-sm font-bold p-2">
           {settings.banner}
         </p>
       )}
-      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-16 gap-2">
+      <div className="relative z-50 bg-ink max-w-6xl mx-auto px-4 flex items-center justify-between h-16 gap-2">
         <Link
           to="/"
           className="flex items-center gap-2 font-extrabold text-lg shrink-0 min-h-11"
@@ -53,14 +83,17 @@ export default function Header({ count, settings }) {
           </span>
         </Link>
         <nav aria-label="Main" className="hidden lg:flex">
-          {nav.map(([n, p]) => (
+          {nav.map(([label, path]) => (
             <NavLink
-              key={n}
-              to={p}
-              end={p === "/"}
-              className="px-3 min-h-11 flex items-center text-sm font-semibold hover:bg-white/10 rounded-lg"
+              key={label}
+              to={path}
+              end={path === "/"}
+              className={
+                "px-3 min-h-11 flex items-center text-sm font-semibold rounded-lg " +
+                (active(path) ? "bg-white/10 text-gold" : "hover:bg-white/10")
+              }
             >
-              {n}
+              {label}
             </NavLink>
           ))}
         </nav>
@@ -78,31 +111,62 @@ export default function Header({ count, settings }) {
             )}
           </Link>
           <button
-            className="p-3 lg:hidden"
+            ref={button}
+            className={
+              "menu-toggle lg:hidden relative w-11 h-11 rounded-lg hover:bg-white/10 " +
+              (open ? "is-open" : "")
+            }
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            onClick={() => setOpen(!open)}
+            aria-controls="mobile-navigation"
+            onClick={() => setOpen((v) => !v)}
           >
-            {open ? <X /> : <Menu />}
+            <span />
+            <span />
+            <span />
           </button>
         </div>
       </div>
       {open && (
-        <nav
-          aria-label="Mobile"
-          className="absolute right-3 top-full mt-2 w-56 bg-ink border border-white/20 rounded-2xl shadow-2xl p-2 grid"
-        >
-          {nav.map(([n, p]) => (
-            <Link
-              className="btn justify-start hover:bg-white/10"
-              key={n}
-              to={p}
-            >
-              {n}
-            </Link>
-          ))}
-        </nav>
+        <div
+          aria-hidden="true"
+          className="lg:hidden fixed inset-0 z-40 bg-transparent"
+          onPointerDown={() => close()}
+        />
       )}
+      <nav
+        ref={panel}
+        id="mobile-navigation"
+        aria-label="Mobile"
+        aria-hidden={!open}
+        inert={open ? undefined : ""}
+        className={
+          "mobile-panel lg:hidden absolute right-3 top-full mt-2 z-50 rounded-2xl bg-ink border border-white/15 shadow-2xl p-2 grid " +
+          (open ? "is-open" : "")
+        }
+      >
+        {nav.map(([label, path], index) => (
+          <Link
+            key={label}
+            to={path}
+            tabIndex={open ? 0 : -1}
+            aria-current={active(path) ? "page" : undefined}
+            onClick={() => close(true)}
+            className={
+              "mobile-menu-item btn justify-start text-sm " +
+              (active(path)
+                ? "bg-gold text-ink"
+                : "text-stone-200 hover:bg-white/10")
+            }
+            style={{
+              "--item-delay":
+                (open ? index * 45 : (nav.length - index - 1) * 25) + "ms",
+            }}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }

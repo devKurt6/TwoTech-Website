@@ -57,12 +57,6 @@ export const I = ({ n, s = 20, c = "" }) => {
   const Icon = icons[n] || Info;
   return <Icon size={s} className={c} aria-hidden="true" />;
 };
-export const Demo = ({ children }) =>
-  html`<div
-    className="flex gap-2 items-start rounded-xl bg-amber-50 border border-amber-300 text-goldText text-sm p-3"
-  >
-    <${I} n="info" s=${18} c="mt-0.5 shrink-0" /><span>${children}</span>
-  </div>`;
 export const Field = ({ l, err, children, help }) =>
   html`<label className="block text-sm font-semibold"
     >${l}${children}${help && html`<span className="block text-xs font-normal text-slate-600 mt-1">${help}</span>`}${err && html`<span role="alert" className="block text-sm text-red-700 mt-1">${err}</span>`}</label

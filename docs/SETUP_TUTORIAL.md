@@ -1,6 +1,6 @@
 # Two Tech setup: GitHub → Netlify + Neon Postgres + Cloudinary
 
-This tutorial deploys **this repository**, including its API and admin panel. Netlify hosts the website and Functions, Neon stores records, and Cloudinary stores product images. You do not need a separate backend server. Keep payment/demo labels until you have verified the real business process.
+This tutorial deploys **this repository**, including its API and admin panel. Netlify hosts the website and Functions, Neon stores records, and Cloudinary stores product images. You do not need a separate backend server. Verify payment instructions and complete [the launch checklist](../LAUNCH_CHECKLIST.md) before accepting customer orders. Leave `VITE_DEMO_MODE` unset or `false` for normal production wording; setting it to `true` enables portfolio notices and requires a new deploy.
 
 ## 1. Prepare your computer and accounts
 

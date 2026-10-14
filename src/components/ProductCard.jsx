@@ -1,10 +1,6 @@
-import { demo } from "../lib/api";
-import { useState, useEffect, useMemo } from "react";
 import { html } from "../lib/html";
 import { P } from "../lib/format";
-import { CATS, PRODUCTS } from "../data/products";
-import { SVC, BOOKABLE } from "../data/services";
-import { I, Demo, Pic, Field, Modal, Head } from "./prototype";
+import { Pic } from "./prototype";
 export const PCard = ({ p, add, view, threshold = 5 }) =>
   html`<article className="card h overflow-hidden flex flex-col">
     <button onClick=${() => view(p)} aria-label=${"View " + p.name}>

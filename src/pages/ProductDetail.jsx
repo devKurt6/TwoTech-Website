@@ -1,10 +1,7 @@
-import { demo } from "../lib/api";
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { html } from "../lib/html";
 import { P } from "../lib/format";
-import { CATS, PRODUCTS } from "../data/products";
-import { SVC, BOOKABLE } from "../data/services";
-import { I, Demo, Pic, Field, Modal, Head } from "../components/prototype";
+import { I, Pic, Modal } from "../components/prototype";
 export const Detail = ({ p, add, onClose }) => {
   const [n, setN] = useState(1);
   return html`<${Modal} title=${p.name} onClose=${onClose}
@@ -55,7 +52,7 @@ export const Detail = ({ p, add, onClose }) => {
               Add to Cart
             </button>
           </div>`
-        }${demo && html`<div className="mt-4"><${Demo}>Demo price and inventory.<//></div>`}
+        }
       </div>
     </div><//
   >`;

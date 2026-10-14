@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useSubmission } from "../hooks/useSubmission";
-import { api, demo } from "../lib/api";
+import { api } from "../lib/api";
 import { BOOKABLE, SVC } from "../data/services";
 import { today } from "../lib/validators";
 import Field from "./Field";
 import Honeypot from "./Honeypot";
 import Confirmation from "./Confirmation";
+import FormConsent from "./FormConsent";
 const initial = {
   name: "",
   email: "",
@@ -92,7 +93,7 @@ export default function RequestForm({ kind, pre }) {
             ? "Booking request received"
             : quote
               ? "Quotation request received"
-              : "Message received"
+              : "Message sent"
         }
         reference={done.ref}
         onReset={() => {
@@ -109,8 +110,8 @@ export default function RequestForm({ kind, pre }) {
               Requested: {f.preferred_date} at {f.preferred_time} ({f.mode})
             </p>
             <p>
-              Your schedule is a request until the business confirms it with
-              you.
+              Your selected schedule is a request and is not final until we
+              confirm it with you.
             </p>
           </>
         ) : quote ? (
@@ -124,7 +125,7 @@ export default function RequestForm({ kind, pre }) {
             </p>
           </>
         ) : (
-          <p>Thank you for your inquiry. Two Tech will review your message.</p>
+          <p>We'll reply as soon as we can.</p>
         )}
       </Confirmation>
     );
@@ -246,11 +247,7 @@ export default function RequestForm({ kind, pre }) {
           </p>
         )}
         <div className={kind === "messages" ? "" : "sm:col-span-2"}>
-          {demo && (
-            <p className="text-sm text-goldText mb-3">
-              Demo mode — submissions are not sent or saved.
-            </p>
-          )}
+          <FormConsent />
           <button className="btn bp" disabled={busy}>
             {busy
               ? "Sending…"

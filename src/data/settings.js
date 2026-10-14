@@ -9,7 +9,7 @@ export const defaults = {
   facebook: "https://www.facebook.com/Engr.TwoTECH",
   delivery_fee: 150,
   payment_instructions:
-    "DEMO — Contact Two Tech for verified bank or GCash transfer instructions before sending payment.",
+    "Contact Two Tech for verified bank or GCash transfer instructions before sending payment.",
   founder_bio:
     "Kurt Decena is a Computer Engineering graduate with IT support and software development experience.",
   low_stock_threshold: 5,

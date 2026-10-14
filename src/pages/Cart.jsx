@@ -2,12 +2,13 @@ import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { P } from "../lib/format";
-import { api, demo } from "../lib/api";
+import { api } from "../lib/api";
 import { useSubmission } from "../hooks/useSubmission";
 import Field from "../components/Field";
 import Honeypot from "../components/Honeypot";
 import Confirmation from "../components/Confirmation";
 import EmptyState from "../components/EmptyState";
+import FormConsent from "../components/FormConsent";
 export function Cart({ items, setQty, clear, settings }) {
   const [step, setStep] = useState("cart"),
     [f, setF] = useState({
@@ -72,14 +73,7 @@ export function Cart({ items, setQty, clear, settings }) {
   return (
     <div className="max-w-3xl mx-auto px-4 pt-10">
       {done ? (
-        <Confirmation
-          title={demo ? "Demo order confirmation" : "Order request received"}
-          reference={done.ref}
-        >
-          <p className="text-sm text-goldText bg-amber-50 p-3 rounded-lg">
-            DEMO PAYMENT FLOW — no online payment was taken. Owner verification
-            is required before launch.
-          </p>
+        <Confirmation title="Order received" reference={done.ref}>
           <ul>
             {receipt.map((i) => (
               <li key={i.p.id} className="flex justify-between gap-3 py-1">
@@ -90,9 +84,7 @@ export function Cart({ items, setQty, clear, settings }) {
               </li>
             ))}
           </ul>
-          <p className="font-bold">
-            {demo ? "Demo total:" : "Server-confirmed total:"} {P(done.total)}
-          </p>
+          <p className="font-bold">Total: {P(done.total)}</p>
           <p>
             {f.delivery_method === "pickup" ? "Pickup" : "Delivery"} for{" "}
             {f.name}
@@ -121,7 +113,7 @@ export function Cart({ items, setQty, clear, settings }) {
       ) : (
         <>
           <h1 className="text-3xl font-extrabold mb-5">
-            {step === "cart" ? "Your cart" : "Checkout (demo payment flow)"}
+            {step === "cart" ? "Your cart" : "Checkout"}
           </h1>
           <section className="card p-5">
             {step === "cart" ? (
@@ -187,10 +179,8 @@ export function Cart({ items, setQty, clear, settings }) {
                 className="grid gap-3"
               >
                 <p className="bg-amber-50 border border-amber-300 text-goldText p-3 rounded-xl text-sm">
-                  Demo order and payment flow. No card details are collected.{" "}
-                  {demo
-                    ? "Requests are sent only when the API is available."
-                    : "This creates an order in the connected database."}
+                  Pay with Cash on Pickup/Delivery or Bank/GCash manual
+                  transfer. No card details are collected.
                 </p>
                 <Honeypot
                   value={submission.honeypot}
@@ -293,6 +283,7 @@ export function Cart({ items, setQty, clear, settings }) {
                   )}
                 </fieldset>
                 {Sum}
+                <FormConsent />
                 {locked && !busy && (
                   <p role="status" className="text-sm text-goldText">
                     Checkout details are held while we verify this request.
@@ -314,7 +305,7 @@ export function Cart({ items, setQty, clear, settings }) {
                     Back
                   </button>
                   <button className="btn bp flex-1" disabled={busy}>
-                    {busy ? "Placing order…" : "Place order (demo flow)"}
+                    {busy ? "Placing order…" : "Place Order"}
                   </button>
                 </div>
               </form>

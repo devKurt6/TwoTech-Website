@@ -1,5 +1,17 @@
 # Verification after the Neon migration
 
+## Design update — 14 October 2026
+
+- 44 automated tests pass, including repair/development routing, keyboard tabs, mobile menu dismissal, rendered public-page/receipt/confirmation copy, optional portfolio banner dismissal and legacy payment-copy normalization. The rendered-copy guard runs in the production build.
+- ESLint, Prettier, the production Vite build, Netlify Function bundling and local SQL integrity/least-privilege checks pass.
+- Browser checks cover `/`, `/shop`, `/services`, `/services/development`, `/book`, `/quote`, `/about`, `/privacy`, `/terms`, empty cart and populated checkout at 320, 768 and 1280 pixels. All have document width equal to client width, with no horizontal overflow. See `layout-results.json`.
+- Visually inspected development layouts at each requested width and saved desktop/mobile-menu screenshots. Verified menu Escape restores toggle focus, closed items are inert, and the transparent backdrop dismisses the menu. Inspected the loaded reduced-motion CSS: hamburger, panel and item transitions are disabled under the media query. The browser API did not provide an OS motion-preference override.
+- `/qa/site.html?page=/services/development` uses the real App with in-memory API fixtures and a MemoryRouter, like the existing isolated admin fixture. Neither QA entry is a Vite production build input. No hosted order, inquiry, inventory or settings writes were made during these checks. Direct URL persistence is additionally covered by route tests; hosted refresh/rewrite verification remains in the launch checklist.
+- Current design changes require no database migration. Existing custom payment instructions are preserved. The exact obsolete default instruction from the earlier seed is normalized for public/admin settings reads.
+- The owner must still supply the revised shop prototype, verify real inventory/payment/hours and finalize the policy drafts. GitHub push and Netlify publication were not performed in this change.
+
+## Earlier migration verification
+
 - The frontend production build, local PostgreSQL schema/seed, least-privilege role checks and function-handler security tests pass without hosted credentials. The Netlify production Functions archive builds successfully.
 - 32 automated tests cover frontend behavior, server pricing, stock, hidden products, simultaneous last-unit requests through the local adapter, malformed/oversized/honeypot input, public setting allowlists, all admin auth gates, CSRF, generic login throttling, token tampering and image signing/metadata checks.
 - Function database tests use PGlite (one serialized local PostgreSQL connection) and provider mocks. They do not replace a multi-session test on a configured Neon development branch.

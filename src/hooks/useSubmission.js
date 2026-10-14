@@ -31,7 +31,7 @@ export function useSubmission(kind, send) {
     inFlight.current = true;
     setBusy(true);
     try {
-      const result = await send(f);
+      const result = await send({ ...f, website: honeypot });
       try {
         sessionStorage.setItem("tt-submit-" + kind, String(Date.now()));
       } catch {
@@ -50,3 +50,4 @@ export function useSubmission(kind, send) {
   }
   return { errors, busy, done, setDone, submit, honeypot, setHoneypot };
 }
+

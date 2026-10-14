@@ -9,7 +9,7 @@ export default function RequireAdmin() {
   if (auth.loading) return <Spinner />;
   if (!auth.user)
     return (
-      <Navigate to="/admin/login" replace state={{ from: location.pathname }} />
+      <Navigate to="/admin/login" replace state={{ from: location.pathname, sessionExpired: auth.expired }} />
     );
   if (!auth.admin)
     return (
@@ -25,3 +25,4 @@ export default function RequireAdmin() {
     );
   return <Outlet />;
 }
+

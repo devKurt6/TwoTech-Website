@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { api, demo } from "../lib/api";
+import { api } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
 import Field from "../components/Field";
 export default function Login() {
@@ -56,13 +56,7 @@ export default function Login() {
             {error}
           </p>
         )}
-        {demo && (
-          <p className="text-sm text-goldText">
-            Connect Supabase before signing in. Demo mode does not grant admin
-            access.
-          </p>
-        )}
-        <button className="btn bp" disabled={busy || demo}>
+        {(auth.expired || location.state?.sessionExpired) && <p role="status" className="text-goldText">Your session expired. Please sign in again.</p>}        <button className="btn bp" disabled={busy}>
           {busy ? "Signing in…" : "Sign in"}
         </button>
         <a href="/" className="btn bs">
@@ -72,3 +66,4 @@ export default function Login() {
     </div>
   );
 }
+

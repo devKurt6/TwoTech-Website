@@ -7,7 +7,7 @@ export const defaults = {
   email: "twotech0128@gmail.com",
   address:
     "Purok 4, Brgy. Sta. Maria, Filinvest Rd, Santo Tomas, Batangas, Philippines",
-  hours: "9:00 AM–8:00 PM (days to be confirmed)",
+  hours: "9:00 AM–8:00 PM",
   facebook: "https://www.facebook.com/Engr.TwoTECH",
   delivery_fee: 150,
   payment_instructions:

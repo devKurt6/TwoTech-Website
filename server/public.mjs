@@ -52,6 +52,9 @@ export function publicSettings(data) {
   );
   if (settings.payment_instructions === legacyPaymentInstructions)
     settings.payment_instructions = defaults.payment_instructions;
+  settings.hours = settings.hours
+    .replace(/\s*\(days to be confirmed\)/gi, "")
+    .trim();
   return settings;
 }
 export async function publicHandler(req, path, db, ip) {
